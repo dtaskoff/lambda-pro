@@ -12,11 +12,12 @@ v(u). v(v). v(w). v(x). v(y). v(z).
 % term(lambda(x, M)) -> x. M
 
 % Parse a user-friendly lambda term
-parse(S) :- string_chars(S, CS), once(phrase(term, CS)).
+% into a lambda term defined in prolog
+parse(S, T) :- string_chars(S, CS), once(phrase(term(T), CS)).
 
-term        --> lambda | application | variable | ['('], term, [')'].
-lambda      --> variable, ['.', ' '], term.
-application --> lambda, [' '], term.
-application --> variable, [' '], term.
-application --> ['('], term, [')', ' '], term.
-variable    --> [C], { atom_string(X, C), v(X) }.
+term(T) --> lambda(T) | application(T) | variable(T) | ['('], term(T), [')'].
+lambda(lambda(X, M)) --> variable(X), ['.', ' '], term(M).
+application(application(M, N)) --> lambda(M), [' '], term(N).
+application(application(M, N)) --> variable(M), [' '], term(N).
+application(application(M, N)) --> ['('], term(M), [')', ' '], term(N).
+variable(X) --> [C], { atom_string(X, C), v(X) }.
