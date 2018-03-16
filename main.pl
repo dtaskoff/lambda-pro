@@ -41,6 +41,15 @@ de_bruijn_term(application(M, N)) :- de_bruijn_term(M), de_bruijn_term(N).
 de_bruijn_term(lambda(M)) :- de_bruijn_term(M).
 de_bruijn_term(parentheses(T)) :- de_bruijn_term(T).
 
+show_de_bruijn_term(X, X) :- number(X).
+show_de_bruijn_term(application(M, N), S) :- show_de_bruijn_term(M, MS), show_de_bruijn_term(N, NS),
+  atom_list_concat([MS, ' ', NS], S).
+show_de_bruijn_term(lambda(M), S) :- show_de_bruijn_term(M, MS),
+  atom_list_concat(['λ ', MS], S).
+show_de_bruijn_term(parentheses(T), S) :- show_de_bruijn_term(T, TS),
+  atom_list_concat(['(', TS, ')'], S).
+
+
 % Call the helper function with initialised accumulators
 to_de_bruijn(X, N) :- empty_assoc(G), to_de_bruijn(X, N, 0, 42, _, G, _).
 % Convert a lambda term into a de Bruijn term:
@@ -50,7 +59,7 @@ to_de_bruijn(X, N, L, K, K, G, G) :- v(X), get_assoc(X, G, Ni), N is Ni + L, !.
 % convert a variable, which doesn't have a de Bruijn index yet
 to_de_bruijn(X, N, L, K, Ki, G, Gi) :- v(X), N is K + L, put_assoc(X, G, K, Gi), Ki is K - 1.
 
-to_de_bruijn(application(M, N), applicaiton(MN, NN), L, K, Kii, G, Gii) :-
+to_de_bruijn(application(M, N), application(MN, NN), L, K, Kii, G, Gii) :-
   to_de_bruijn(M, MN, L, K, Ki, G, Gi), to_de_bruijn(N, NN, L, Ki, Kii, Gi, Gii).
 
 to_de_bruijn(lambda(X, M), lambda(MN), L, K, Ki, G, Giii) :-
