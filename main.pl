@@ -4,6 +4,16 @@ term(application(M, N)) :- term(M), term(N). % an application
 term(lambda(X, M)) :- v(X), term(M).         % a lambda abstraction
 term(parentheses(T)) :- term(T).
 
+:- use_module(utils, [atom_list_concat/2]).
+
+show_term(X, X) :- v(X).
+show_term(application(M, N), S) :- show_term(M, MS), show_term(N, NS),
+  atom_list_concat([MS, ' ', NS], S).
+show_term(lambda(X, M), S) :- show_term(M, MS),
+  atom_list_concat([X, '. ', MS], S).
+show_term(parentheses(T), S) :- show_term(T, TS),
+  atom_list_concat(['(', TS, ')'], S).
+
 % The set of allowed variables
 v(u). v(v). v(w). v(x). v(y). v(z).
 
