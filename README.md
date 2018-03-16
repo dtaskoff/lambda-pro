@@ -21,9 +21,9 @@ Syntax:
 -----
 λ-terms are in the following format:
 ```
-x     is a variable
-(M N) is a λ-application
-x. M  is a λ-abstraction
+x    is a variable
+M N  is a λ-application
+x. M is a λ-abstraction
 ```
 
 Currently implemented features:
