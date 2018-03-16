@@ -28,4 +28,18 @@ x. M  is a λ-abstraction
 
 Currently implemented features:
 -----
-* parse a λ-term
+* parse a λ-term:
+
+```pl
+?- parse("x", T).
+T= x.
+
+?- parse("(x y) z", T).
+T = application(application(x, y), z).
+
+?- parse("x. x x", T).
+T = lambda(x, application(x, x)).
+
+?- parse("x. y. z. (x z) (y z)", T).
+T = lambda(x, lambda(y, lambda(z, application(application(x, z), application(y, z))))).
+```
