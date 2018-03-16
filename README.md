@@ -43,3 +43,22 @@ T = lambda(x, application(x, x)).
 ?- parse("x. y. z. (x z) (y z)", T).
 T = lambda(x, lambda(y, lambda(z, application(application(x, z), application(y, z))))).
 ```
+* convert a λ-term to a de Bruijn term which uses [de Bruijn indices](https://en.wikipedia.org/wiki/De_Bruijn_index):
+
+```pl
+?- parse("x", T), to_de_bruijn(T, N).
+T= x,
+N = 42.
+
+?- parse("(x y) z", T), to_de_bruijn(T, N).
+T = application(application(x, y), z),
+N = applicaiton(applicaiton(42, 41), 40).
+
+?- parse("x. x x", T), to_de_bruijn(T, N).
+T = lambda(x, application(x, x)),
+N = lambda(application(0, 0)).
+
+?- parse("x. y. z. (x z) (y z)", T), to_de_bruijn(T, N).
+T = lambda(x, lambda(y, lambda(z, application(application(x, z), application(y, z))))),
+N = lambda(lambda(lambda(application(application(2, 0), application(1, 0))))).
+```
