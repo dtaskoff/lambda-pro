@@ -6,16 +6,21 @@ How to use:
 * install a version of [SWI-Prolog](http://www.swi-prolog.org/)
 * run SWI-Prolog
 
-```bash
+
+```pl
 > swipl
 Welcome to SWI-Prolog
-?- [main].
+?- [load]. % load some predicates into swipl
 true.
 
 ?-
 ```
 * you can play with the available features here
 * note: `halt.` exits `swipl`.
+
+```pl
+?- [test]. % runs the test suite
+```
 
 Syntax:
 -----
@@ -28,43 +33,31 @@ x. M is a λ-abstraction
 
 Currently implemented features:
 -----
-* parse a λ-term (and show it):
+* convert between user-friendly strings, λ-terms and
+  de Bruijn terms which use [de Bruijn indices](https://en.wikipedia.org/wiki/De_Bruijn_index)
 
 ```pl
-?- parse("x", T), show_term(T, S).
-T= S, S = x.
+?- atom_term(x, T).
+T = x.
 
-?- parse("(x y) z", T), show_term(T, S).
-T = application(parentheses(application(x, y)), z),
-S = '(x y) z'.
+?- atom_term(A, x).
+A = x.
 
-?- parse("x. x x", T), show_term(T, S).
-T = lambda(x, application(x, x)),
-S = 'x. x x'.
+?- atom_term('(x y) z', T).
+T = application(parentheses(application(x, y)), z).
 
-?- parse("x. y. z. (x z) (y z)", T), show_term(T, S).
-T = lambda(x, lambda(y, lambda(z, application(application(x, z), application(y, z))))),
-S = 'x. y. z. (x z) (y z)'.
-```
-* convert a λ-term to a de Bruijn term which uses [de Bruijn indices](https://en.wikipedia.org/wiki/De_Bruijn_index) (and show it):
+?- atom_term(A, application(parentheses(application(x, y)), z).
+A = '(x y) z'.
 
-```pl
-?- parse("x", T), to_de_bruijn(T, N), show_de_bruijn_term(N, S).
-T= x,
-N = S, S = 42.
+?- atom_term('x. x x', T).
+T = lambda(x, application(x, x)).
 
-?- parse("(x y) z", T), to_de_bruijn(T, N), show_de_bruijn_term(N, S).
-T = application(application(x, y), z),
-N = applicaiton(applicaiton(42, 41), 40),
-S = '(42 41) 40'.
+?- atom_term(A, lambda(x, application(x, x))).
+A = 'x. x x'.
 
-?- parse("x. x x", T), to_de_bruijn(T, N), show_de_bruijn_term(N, S).
-T = lambda(x, application(x, x)),
-N = lambda(application(0, 0)),
-S = 'λ 0 0'.
+?- atom_term('x. x y', T), term_de_bruijn(T, N), atom_term(A, N).
+... A = 'λ 0 43'.
 
-?- parse("x. y. z. (x z) (y z)", T), to_de_bruijn(T, N), show_de_bruijn_term(N, S).
-T = lambda(x, lambda(y, lambda(z, application(application(x, z), application(y, z))))),
-N = lambda(lambda(lambda(application(application(2, 0), application(1, 0))))),
-S = 'λ λ λ (2 0) (1 0)'.
+?- atom_term('x. y. x', T), term_de_bruijn(T, N), atom_term(A, N).
+... A = 'λ λ 1'.
 ```
