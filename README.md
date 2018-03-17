@@ -54,13 +54,13 @@ T = lambda(x, application(x, x)).
 ?- atom_term(A, lambda(x, application(x, x))).
 A = 'x. x x'.
 
-?- atom_term('x. x y', T), term_de_bruijn(T, N), atom_term(A, N).
-... A = 'λ 0 43'.
+?- atom_de_bruijn_atom('x. x y', A).
+A = 'λ 0 43'.
 
-?- atom_term('x. y. x', T), term_de_bruijn(T, N), atom_term(A, N).
-... A = 'λ λ 1'.
+?- atom_de_bruijn_atom('x. y. x', A).
+A = 'λ λ 1'.
 
-?- atom_term('x. y. y x', T), term_de_bruijn(T, N),
-|    e_reduce(N, Ni), term_de_bruijn(Ti, Ni), atom_term(A, Ti).
+?- atom_de_bruijn('x. y. y x', N), e_reduce(N, Ni),
+|    atom_de_bruijn(A, Ni).
 ... A = 'x. x'.
 ```
