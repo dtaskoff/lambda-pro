@@ -6,14 +6,6 @@ lterm(parentheses(T)) :- term(T).
 
 :- use_module(utils, [atom_list_concat/2]).
 
-lterm_to_atom(X, X) :- v(X).
-lterm_to_atom(application(M, N), S) :- lterm_to_atom(M, MS), lterm_to_atom(N, NS),
-  atom_list_concat([MS, ' ', NS], S).
-lterm_to_atom(lambda(X, M), S) :- lterm_to_atom(M, MS),
-  atom_list_concat([X, '. ', MS], S).
-lterm_to_atom(parentheses(T), S) :- lterm_to_atom(T, TS),
-  atom_list_concat(['(', TS, ')'], S).
-
 % The set of allowed variables
 v(x). v(y). v(z). v(u). v(v). v(w).
 variables(V) :- bagof(X, v(X), V).
@@ -23,8 +15,8 @@ variables(V) :- bagof(X, v(X), V).
 % abstraction ::= variable. term
 % application ::= term term
 % variable ::= x | y | z | u | v | w
-atom_to_lterm(A, T) :- atom_chars(A, CS), parse(CS, T).
-string_to_lterm(S, T) :- string_chars(S, CS), parse(CS, T).
+atom_lterm(A, T) :- var(A), parse(CS, T), atom_chars(A, CS), !.
+atom_lterm(A, T) :- atom_chars(A, CS), parse(CS, T).
 
 parse(CS, T) :- once(phrase(term(T), CS)).
 
@@ -33,7 +25,7 @@ lambda(lambda(X, M)) --> variable(X), ['.', ' '], term(M).
 application(application(M, N)) --> lambda(M), [' '], term(N).
 application(application(M, N)) --> variable(M), [' '], term(N).
 application(application(M, N)) --> parentheses(M), [' '], term(N).
-variable(X) --> [C], { atom_string(X, C), v(X) }.
+variable(X) --> [X], { v(X) }.
 parentheses(parentheses(T)) --> ['('], term(T), [')'].
 
 % What is a 'de Bruijn' term?
