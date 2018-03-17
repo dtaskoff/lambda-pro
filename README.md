@@ -18,9 +18,7 @@ true.
 * you can play with the available features here
 * note: `halt.` exits `swipl`.
 
-```pl
-?- [test]. % runs the test suite
-```
+```bash ./test.sh``` runs the test suite.
 
 Syntax:
 -----
