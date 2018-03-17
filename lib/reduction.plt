@@ -27,17 +27,17 @@ test(up) :- up(lambda(lambda(lambda(2))),
 test(up) :- up(lambda(lambda(lambda(3))),
   lambda(lambda(lambda(4))), 1).
 
-test(substitute) :- substitute(42, 42, lambda(42), lambda(42)).
+test(substitute) :- substitute(42, 42, lambda(42), parentheses(lambda(42))).
 test(substitute) :- substitute(42, 41, _, 42).
 
 test(substitute) :-
   substitute(application(0, 1), 0, lambda(42),
-    application(lambda(42), 1)).
+    application(parentheses(lambda(42)), 1)).
 
 test(substitute) :-
   substitute(lambda(0), 0, lambda(42), lambda(0)).
 test(substitute) :-
-  substitute(lambda(1), 0, lambda(42), lambda(lambda(43))).
+  substitute(lambda(1), 0, lambda(42), lambda(parentheses(lambda(43)))).
 test(substitute) :-
   not(substitute(lambda(1), 0, lambda(42), lambda(lambda(42)))).
 test(substitute) :-
@@ -47,7 +47,8 @@ test(substitute) :-
 test(substitute) :-
   substitute(lambda(application(2, 0)), 1,
     application(2, lambda(lambda(application(application(0, 1), 2)))),
-    lambda(application(application(3, lambda(lambda(application(application(0, 1), 3)))), 0))).
+    lambda(application(parentheses(
+      application(3, lambda(lambda(application(application(0, 1), 3))))), 0))).
 
 test(b_reduce,
   forall(term(_, de_bruijn, lambda, T))) :-
@@ -58,6 +59,6 @@ test(b_reduce) :- b_reduce(application(lambda(2), 42), 1).
 test(b_reduce) :- b_reduce(
   application(lambda(lambda(application(42, 1))),
     lambda(application(0, 1))),
-  lambda(application(41, lambda(application(0, 2))))).
+  lambda(application(41, parentheses(lambda(application(0, 2)))))).
 
 :- end_tests(reduction).

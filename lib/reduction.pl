@@ -10,7 +10,8 @@
 % (x. M)[y -> N] := x. M[y -> N]
 substitute(M, X, N, Mi) :- substitute(M, X, N, 0, Mi).
 
-substitute(X, X, N, L, Ni) :- number(X), up(N, Ni, L), !.
+substitute(X, X, N, L, Ni) :- number(X), number(N), up(N, Ni, L), !.
+substitute(X, X, N, L, parentheses(Ni)) :- number(X), up(N, Ni, L), !.
 substitute(Y, X, _, _, Y) :- number(X), number(Y), X \= Y.
 substitute(application(M1, M2), X, N, L, application(M1i, M2i)) :-
   substitute(M1, X, N, L, M1i), substitute(M2, X, N, L, M2i).
@@ -34,7 +35,7 @@ b_reduce(lambda(M), lambda(N)) :- b_reduce(M, N).
 b_reduce(application(lambda(M), parentheses(N)), Mi) :-
   b_reduce(application(lambda(M), N), Mi), !.
 b_reduce(application(lambda(M), N), Mii) :- up(N, Ni, 1), substitute(M, 0, Ni, Mi), up(Mi, Mii, -1), !.
-b_reduce(application(parentheses(lambda(M)), N), parentheses(Mi)) :- b_reduce(application(lambda(M), N), Mi).
+b_reduce(application(parentheses(lambda(M)), N), Mi) :- b_reduce(application(lambda(M), N), Mi).
 b_reduce(application(M, N), application(Mi, Ni)) :-
   b_reduce(M, Mi); b_reduce(N, Ni).
 
