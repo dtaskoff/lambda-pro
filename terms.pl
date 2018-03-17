@@ -30,10 +30,12 @@ application(application(M, N)) --> parentheses(M), [' '], term(N).
 application(application(M, N)) --> lambda(M), [' '], term(N).
 application(application(M, N)) --> variable(M), [' '], term(N).
 variable(X) --> index(X) | name(X).
-index(X) --> digit(D), index(Y),
-  { atom_concat(D, Y, Xi), atom_number(Xi, X) }.
+
+index(X) --> var(X), digit(D), index(Y),
+  { atom_concat(D, Y, Xi), number(X), atom_number(Xi, X) }.
+index(N) --> [A], { number(N), atom_number(A, N) }.
 index(D) --> digit(D).
-digit(Di) --> [D], { char_type(D, digit(Di)) }.
+digit(Di) --> var(Di), [D], { char_type(D, digit(Di)) }.
 
 name(X) --> symbol(S), name(Y), { atom_concat(S, Y, X) }.
 name(S) --> symbol(S).
