@@ -35,6 +35,7 @@ Currently implemented features:
 -----
 * convert between user-friendly strings, λ-terms and
   de Bruijn terms which use [de Bruijn indices](https://en.wikipedia.org/wiki/De_Bruijn_index)
+* η-reduction for λ-terms using de Bruijn indices
 
 ```pl
 ?- atom_term(x, T).
@@ -60,4 +61,8 @@ A = 'x. x x'.
 
 ?- atom_term('x. y. x', T), term_de_bruijn(T, N), atom_term(A, N).
 ... A = 'λ λ 1'.
+
+?- atom_term('x. y. y x', T), term_de_bruijn(T, N),
+|    e_reduce(N, Ni), term_de_bruijn(Ti, Ni), atom_term(A, Ti).
+... A = 'x. x'.
 ```
