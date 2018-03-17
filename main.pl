@@ -1,46 +1,37 @@
-% What is a lambda term?
-lterm(X) :- v(X).                             % a variable
-lterm(application(M, N)) :- term(M), term(N). % an application
-lterm(lambda(X, M)) :- v(X), term(M).         % a lambda abstraction
-lterm(parentheses(T)) :- term(T).
+% What is a λ-term?
+% <λ-term> ::= <λ-abstraction> | <application> | <variable> | (<λ-term>)
+% <λ-abstraction> ::= <variable>. <λ-term> | λ <λ-term>
+% <application> ::= <λ-term> <λ-term>
+% <variable> ::= s where s ∈ Σ⁺ | n where n ∈ N
+term(X) :- v(X).
+term(X) :- number(X).
+term(application(M, N)) :- term(M), term(N).
+term(lambda(X, M)) :- v(X), term(M).
+term(lambda(M)) :- term(M).
+term(parentheses(T)) :- term(T).
 
 :- use_module(utils, [atom_list_concat/2]).
 
-% The set of allowed variables
-v(x). v(y). v(z). v(u). v(v). v(w).
-variables(V) :- bagof(X, v(X), V).
-
 % Convert a user-friendly lambda term into an internally represented lambda term
-% term ::= abstraction | application | variable | (term)
-% abstraction ::= variable. term
-% application ::= term term
-% variable ::= x | y | z | u | v | w
-atom_lterm(A, T) :- var(A), parse(CS, T), atom_chars(A, CS), !.
-atom_lterm(A, T) :- atom_chars(A, CS), parse(CS, T).
+atom_term(A, T) :- var(A), atoms_term(AS, T), atom_list_concat(AS, A), !.
+atom_term(A, T) :- atom_chars(A, CS), atoms_term(CS, T).
 
-parse(CS, T) :- once(phrase(term(T), CS)).
+atoms_term(AS, T) :- once(phrase(term(T), AS)).
 
-term(T) --> lambda(T) | application(T) | variable(T) | parentheses(T).
+term(T) --> parentheses(T) | lambda(T) | application(T) | variable(T).
+parentheses(parentheses(T)) --> ['('], term(T), [')'].
 lambda(lambda(X, M)) --> variable(X), ['.', ' '], term(M).
+lambda(lambda(M)) --> ['λ', ' '], term(M).
+application(application(M, N)) --> parentheses(M), [' '], term(N).
 application(application(M, N)) --> lambda(M), [' '], term(N).
 application(application(M, N)) --> variable(M), [' '], term(N).
-application(application(M, N)) --> parentheses(M), [' '], term(N).
-variable(X) --> [X], { v(X) }.
-parentheses(parentheses(T)) --> ['('], term(T), [')'].
+variable(X) --> symbol(S), variable(Y),
+  { atom_concat(S, Y, Xi), (atom_number(Xi, X); X = Xi) }.
+variable(X) --> var(X), symbol(S), { atom_number(S, X); X = S }.
+variable(S) --> symbol(S).
+symbol(S) --> [S], { S \= ' ' }.
 
-% What is a 'de Bruijn' term?
-dbterm(X) :- number(X).
-dbterm(application(M, N)) :- dbterm(M), dbterm(N).
-dbterm(lambda(M)) :- dbterm(M).
-dbterm(parentheses(T)) :- dbterm(T).
-
-dbterm_to_atom(X, X) :- number(X).
-dbterm_to_atom(application(M, N), S) :-
-  dbterm_to_atom(M, MS), dbterm_to_atom(N, NS), atom_list_concat([MS, ' ', NS], S).
-dbterm_to_atom(lambda(M), S) :-
-  dbterm_to_atom(M, MS), atom_list_concat(['λ ', MS], S).
-dbterm_to_atom(parentheses(T), S) :-
-  dbterm_to_atom(T, TS), atom_list_concat(['(', TS, ')'], S).
+var(X, Y, Y) :- var(X).
 
 % Call the helper function with initialised accumulators
 dbterm_to_lterm(N, X) :- variables(V), empty_assoc(G),
