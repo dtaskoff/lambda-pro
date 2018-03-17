@@ -11,7 +11,7 @@ test(free_in, [setup(term(42, de_bruijn, lambda, T))]) :-
   free_in(43, T).
 
 test(e_reduce,
-  forall((term(C, de_bruijn, lambda, T), C \= c1)) :-
+  forall((term(C, de_bruijn, lambda, T), C \= c1))) :-
   not(e_reduce(T, _)).
 
 test(e_reduce) :-
