@@ -1,8 +1,8 @@
 :- module(indices, [term_de_bruijn/2]).
 % Conversions between λ-terms with and without de Bruijn indices
 
-term_de_bruijn(T, N) :- var(T), use_names(N, T).
-term_de_bruijn(T, N) :- var(N), use_indices(T, N), !.
+term_de_bruijn(T, N) :- var(T), use_names(N, T), !.
+term_de_bruijn(T, N) :- use_indices(T, N).
 
 name(x). name(y). name(z). name(u). name(v). name(w).
 names(Xs) :- bagof(X, name(X), Xs).
