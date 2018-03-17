@@ -15,7 +15,7 @@ show_term(parentheses(T), S) :- show_term(T, TS),
   atom_list_concat(['(', TS, ')'], S).
 
 % The set of allowed variables
-v(u). v(v). v(w). v(x). v(y). v(z).
+v(x). v(y). v(z). v(u). v(v). v(w).
 variables(V) :- bagof(X, v(X), V).
 
 % Lambda terms in a user-friendly format
