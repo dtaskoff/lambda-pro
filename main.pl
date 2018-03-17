@@ -16,6 +16,7 @@ show_term(parentheses(T), S) :- show_term(T, TS),
 
 % The set of allowed variables
 v(u). v(v). v(w). v(x). v(y). v(z).
+variables(V) :- bagof(X, v(X), V).
 
 % Lambda terms in a user-friendly format
 % term(x) -> x
@@ -49,6 +50,25 @@ show_de_bruijn_term(lambda(M), S) :- show_de_bruijn_term(M, MS),
 show_de_bruijn_term(parentheses(T), S) :- show_de_bruijn_term(T, TS),
   atom_list_concat(['(', TS, ')'], S).
 
+
+% Call the helper function with initialised accumulators
+from_de_bruijn(N, X) :- variables(V), empty_assoc(G),
+  from_de_bruijn(N, X, 0, V, _, G, _).
+% Convert a de Bruijn term into a lambda term:
+%
+% convert a bound variable
+from_de_bruijn(N, X, L, V, V, G, G) :- number(N), Ni is N - L, get_assoc(Ni, G, X), !.
+% convert a free variable
+from_de_bruijn(N, X, L, [X|V], V, G, Gi) :- number(N), Ni is N - L, put_assoc(Ni, G, X, Gi).
+
+from_de_bruijn(application(MN, NN), application(M, N), L, V, Vii, G, Gii) :-
+  from_de_bruijn(MN, M, L, V, Vi, G, Gi), from_de_bruijn(NN, N, L, Vi, Vii, Gi, Gii).
+
+from_de_bruijn(lambda(MN), lambda(X, M), L, V, Vii, G, Giii) :-
+  from_de_bruijn(-1, X, L, V, Vi, G, Gi), Ni is -L-1, put_assoc(Ni, Gi, X, Gii), Li is L + 1, from_de_bruijn(MN, M, Li, Vi, Vii, Gii, Giii).
+
+from_de_bruijn(parentheses(MN), parentheses(M), L, V, Vi, G, Gi) :-
+  from_de_bruijn(MN, M, L, V, Vi, G, Gi).
 
 % Call the helper function with initialised accumulators
 to_de_bruijn(X, N) :- empty_assoc(G), to_de_bruijn(X, N, 0, 42, _, G, _).
