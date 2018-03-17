@@ -7,10 +7,10 @@
 % <λ-abstraction> ::= <variable>. <λ-term> | λ <λ-term>
 % <application> ::= <λ-term> <λ-term>
 % <variable> ::= s where s ∈ Σ⁺ | n where n ∈ N
-term(X) :- v(X).
+term(X) :- atom(X), !.
 term(X) :- number(X).
 term(application(M, N)) :- term(M), term(N).
-term(lambda(X, M)) :- v(X), term(M).
+term(lambda(X, M)) :- atom(X), term(M).
 term(lambda(M)) :- term(M).
 term(parentheses(T)) :- term(T).
 
@@ -29,10 +29,14 @@ lambda(lambda(M)) --> ['λ', ' '], term(M).
 application(application(M, N)) --> parentheses(M), [' '], term(N).
 application(application(M, N)) --> lambda(M), [' '], term(N).
 application(application(M, N)) --> variable(M), [' '], term(N).
-variable(X) --> symbol(S), variable(Y),
-  { atom_concat(S, Y, Xi), (atom_number(Xi, X); X = Xi) }.
-variable(X) --> var(X), symbol(S), { atom_number(S, X); X = S }.
-variable(S) --> symbol(S).
-symbol(S) --> [S], { S \= ' ' }.
+variable(X) --> index(X) | name(X).
+index(X) --> digit(D), index(Y),
+  { atom_concat(D, Y, Xi), atom_number(Xi, X) }.
+index(D) --> digit(D).
+digit(Di) --> [D], { char_type(D, digit(Di)) }.
+
+name(X) --> symbol(S), name(Y), { atom_concat(S, Y, X) }.
+name(S) --> symbol(S).
+symbol(S) --> [S], { S \= ' ', S \= '(', S \= ')', S \= '.' }.
 
 var(X, Y, Y) :- var(X).
