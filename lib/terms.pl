@@ -1,4 +1,4 @@
-:- module(terms, [term/1, atom_term/2, eq/2]).
+:- module(terms, [term/1, atom_term/2, eq/2, free_variables/2]).
 % Definitions of λ-terms and conversions between
 % λ-terms and prolog atoms
 
@@ -50,3 +50,11 @@ eq(application(M, N), application(Mi, Ni)) :- eq(M, Mi), eq(N, Ni), !.
 eq(lambda(M), lambda(N)) :- eq(M, N), !.
 eq(parentheses(M), N) :- eq(M, N), !.
 eq(M, parentheses(N)) :- eq(M, N).
+
+% The free variables of a λ-term
+free_variables(X, [X]) :- atom(X).
+free_variables(application(M, N), FV) :-
+  free_variables(M, FVM), free_variables(N, FVN), union(FVM, FVN, FV).
+free_variables(lambda(X, M), FV) :- free_variables(M, FVM),
+  subtract(FVM, [X], FV).
+free_variables(parentheses(T), FV) :- free_variables(T, FV).
