@@ -1,4 +1,4 @@
-:- module(terms, [term/1, atom_term/2]).
+:- module(terms, [term/1, atom_term/2, eq/2]).
 % Definitions of λ-terms and conversions between
 % λ-terms and prolog atoms
 
@@ -43,3 +43,10 @@ symbol(S) --> [S],
   { S \= 'λ', S \= ' ', S \= '(', S \= ')', S \= '.' }.
 
 var(X, Y, Y) :- var(X).
+
+% α-equivalence for terms with de Bruijn indices
+eq(X, X) :- number(X), !.
+eq(application(M, N), application(Mi, Ni)) :- eq(M, Mi), eq(N, Ni), !.
+eq(lambda(M), lambda(N)) :- eq(M, N), !.
+eq(parentheses(M), N) :- eq(M, N), !.
+eq(M, parentheses(N)) :- eq(M, N).
