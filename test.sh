@@ -1,4 +1,1 @@
-swipl <<'EOF'
-[test].
-halt.
-EOF
+swipl <<< [test].
