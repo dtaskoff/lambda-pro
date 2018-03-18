@@ -1,7 +1,7 @@
 :- module(reduction,
   [ b_reduce/2, substitute/4, up/3, e_reduce/2, free_in/2
   ]).
-% Definitions of β-reduction (TODO) and η-reduction for λ-terms
+% Definitions of β-reduction and η-reduction for λ-terms
 
 % What is a substitution?
 % x[x -> N] := N
