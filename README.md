@@ -42,8 +42,10 @@ Currently implemented features:
 * convert between user-friendly strings, λ-terms and
   de Bruijn terms which use [de Bruijn indices](https://en.wikipedia.org/wiki/De_Bruijn_index)
 * β-reduction and η-reduction for λ-terms using de Bruijn indices
-* read-evaluate loop (supports only λ-term reading and
-  direct β- and η- reductions)
+* read-evaluate loop:
+  - λ-term reading
+  - α-equivalence checking (for already defined terms)
+  - direct β- and η- reductions
 
 ```pl
 ?- atom_term(x, T).
