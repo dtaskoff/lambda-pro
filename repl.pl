@@ -13,7 +13,7 @@ fs(Fs) :- max_index(I), setof(X, between(0, I, X), Is),
 % repl(Bindings, Names).
 % a simple read-evaluate-print loop
 repl(Bs, Ns) :- read_input(In),
-  once(evaluate_input(In, Out, Bs, Ns, Bsi, Nsi)),
+  evaluate_input(In, Out, Bs, Ns, Bsi, Nsi),
   print_output(Out),
   repl(Bsi, Nsi).
 
