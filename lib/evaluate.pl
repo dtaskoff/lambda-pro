@@ -24,7 +24,7 @@ process_lambda(A, Out, Bs, [N|Ns], Bsi, Ns) :-
   atom_term(A, T), term_de_bruijn(T, Ti),
   put_assoc(N, Bs, (T, Ti), Bsi),
   atom_term(Ai, Ti),
-  atom_list_concat([N, ' = ', A, '\n', '(de Bruijn) ', Ai], Out).
+  atom_list_concat([N, ' = ', A, '\n(de Bruijn) ', Ai], Out).
 
 process_reduction(In, Outi, Bs, Ns, Bsi, Nsi, Reduce) :-
   x_reduction(Reduce, In, A), atom_de_bruijn(A, N),
