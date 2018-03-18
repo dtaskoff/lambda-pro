@@ -10,8 +10,7 @@
 
 evaluate_input(In, Out, Bs, Ns, Bsi, Nsi) :-
   evaluate_quit(In, Out);
-  evaluate_reduction(In, Out, Bs, Ns, Bsi, Nsi, b_reduce);
-  evaluate_reduction(In, Out, Bs, Ns, Bsi, Nsi, e_reduce);
+  evaluate_reduction(In, Out, Bs, Ns, Bsi, Nsi, _);
   evaluate_equivalence(In, Out, Bs, Ns, Bsi, Nsi);
   evaluate_lambda(In, Out, Bs, Ns, Bsi, Nsi);
   evaluate_bad_input(In, Out), Ns = Nsi, Bs = Bsi.
@@ -42,7 +41,7 @@ show_terms(N, A, Ai, S) :-
   atom_list_concat([N, ' = ', A, '\n(de Bruijn) ', Ai], S).
 
 evaluate_reduction(In, Outi, Bs, Ns, Bsi, Nsi, Reduce) :-
-  x_reduction(Reduce, In, A),
+  member(Reduce, [b_reduce, e_reduce]), x_reduction(Reduce, In, A),
   (evaluate_substitution(A, T, Bs, S);
     atom_de_bruijn(A, T), S = ''),
   call(Reduce, T, Ti), evaluate_(Ai, Ti, Out, Bs, Ns, Bsi, Nsi),
