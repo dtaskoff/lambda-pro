@@ -16,7 +16,7 @@ term(parentheses(T)) :- term(T).
 
 :- use_module(utils, [atom_list_concat/2]).
 
-% Convert a user-friendly lambda term into an internally represented lambda term
+% Convert a user-friendly λ-term into an internally represented λ-term
 atom_term(A, T) :- var(A), atoms_term(AS, T), atom_list_concat(AS, A), !.
 atom_term(A, T) :- atom_chars(A, CS), atoms_term(CS, T).
 
@@ -29,16 +29,17 @@ lambda(lambda(M)) --> ['λ', ' '], term(M).
 application(application(M, N)) --> parentheses(M), [' '], term(N).
 application(application(M, N)) --> lambda(M), [' '], term(N).
 application(application(M, N)) --> variable(M), [' '], term(N).
-variable(X) --> index(X) | name(X).
+variable(X) --> index(X), ! | name(X).
 
 index(X) --> var(X), digit(D), index(Y),
-  { atom_concat(D, Y, Xi), number(X), atom_number(Xi, X) }.
+  { atom_concat(D, Y, Xi), atom_number(Xi, X) }.
 index(N) --> [A], { number(N), atom_number(A, N) }.
 index(D) --> digit(D).
 digit(Di) --> var(Di), [D], { char_type(D, digit(Di)) }.
 
 name(X) --> symbol(S), name(Y), { atom_concat(S, Y, X) }.
 name(S) --> symbol(S).
-symbol(S) --> [S], { S \= ' ', S \= '(', S \= ')', S \= '.' }.
+symbol(S) --> [S],
+  { S \= 'λ', S \= ' ', S \= '(', S \= ')', S \= '.' }.
 
 var(X, Y, Y) :- var(X).
