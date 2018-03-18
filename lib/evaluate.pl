@@ -8,7 +8,8 @@
 
 evaluate_input(In, Out, Bs, Ns, Bsi, Nsi) :-
   process_quit(In, Out);
-  process_lambda(In, Out, Bs, Ns, Bsi, Nsi).
+  process_lambda(In, Out, Bs, Ns, Bsi, Nsi);
+  process_bad_input(In, Out).
 
 % Exit if the user has entered 'quit'
 process_quit("quit", _) :- halt.
@@ -20,3 +21,7 @@ process_lambda(A, Out, Bs, [N|Ns], Bsi, Ns) :-
   put_assoc(N, Bs, (T, Ti), Bsi),
   atom_term(Ai, Ti),
   atom_list_concat([N, ' = ', A, '\n', '(de Bruijn) ', Ai], Out).
+
+% Dislay a message if the input isn't valid
+process_bad_input(In, Out) :-
+  atom_list_concat(['Bad input: ', In], Out).
