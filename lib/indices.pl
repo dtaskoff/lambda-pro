@@ -1,4 +1,4 @@
-:- module(indices, [term_de_bruijn/2]).
+:- module(indices, [term_de_bruijn/2, max_index/1, index_of/3]).
 % Conversions between λ-terms with and without de Bruijn indices
 
 term_de_bruijn(T, N) :- var(T), use_names(N, T), !.
@@ -39,9 +39,11 @@ use_names(parentheses(N), parentheses(T), L, V, Vi, G, Gi) :-
   use_names(N, T, L, V, Vi, G, Gi).
 
 
+max_index(42).
+
 % Give all names de Bruijn indices
 use_indices(T, N) :- empty_assoc(G),
-  use_indices(T, N, 0, 42, _, G, _).
+  max_index(I), use_indices(T, N, 0, I, _, G, _).
 
 % use_indices(TermWithNames,
 %   TermWithDeBruijnIndices,
@@ -70,3 +72,21 @@ use_indices(lambda(X, M), lambda(N), L, K, Ki, G, Giii) :-
 
 use_indices(parentheses(T), parentheses(N), L, K, Ki, G, Gi) :-
   use_indices(T, N, L, K, Ki, G, Gi).
+
+% The de Bruijn index of a variable
+index_of(X, M, I):- empty_assoc(V), max_index(Ix),
+  once(index_of(X, M, I, Ix, _, 0, V, true)).
+
+index_of(X, X, I, Ix, _, L, _, true) :- atom(X), I is Ix + L.
+index_of(X, Y, _, Ix, Ixi, _, BV, false) :- atom(Y), X \= Y,
+  not(get_assoc(Y, BV, _)), Ixi is Ix + 1.
+index_of(X, application(M, N), I, Ix, Ixii, L, BV, _) :-
+  index_of(X, M, I, Ix, Ixii, L, BV, true);
+  index_of(X, M, I, Ix, Ixi, L, BV, false),
+  index_of(X, N, I, Ixi, Ixii, L, BV, true).
+index_of(X, lambda(X, _), _, _, _, _, _, _) :- false.
+index_of(X, lambda(Y, M), I, Ix, Ixi, L, BV, B) :- X \= Y,
+  Li is L + 1, put_assoc(Y, BV, 0, BVi),
+  index_of(X, M, I, Ix, Ixi, Li, BVi, B).
+index_of(X, parentheses(M), I, Ix, Ixi, L, BV, B) :-
+  index_of(X, M, I, Ix, Ixi, L, BV, B).
