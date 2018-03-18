@@ -13,13 +13,17 @@ evaluate_input(In, Out, Bs, Ns, Bsi, Nsi) :-
   evaluate_reduction(In, Out, Bs, Ns, Bsi, Nsi, e_reduce);
   evaluate_equivalence(In, Out, Bs, Ns, Bsi, Nsi);
   evaluate_lambda(In, Out, Bs, Ns, Bsi, Nsi);
-  evaluate_bad_input(In, Out).
+  evaluate_bad_input(In, Out), Ns = Nsi, Bs = Bsi.
 
 % Exit if the user has entered 'quit'
 evaluate_quit(quit, _) :- halt.
 
 % Store and show a λ-term with its corresponding name and
 % version with de Bruijn indices
+evaluate_lambda(A, Out, Bs, Ns, Bs, Ns) :-
+  get_assoc(A, Bs, (Ti, Tii)),
+  atom_term(Ai, Ti), atom_term(Aii, Tii),
+  show_terms(A, Ai, Aii, Out), !.
 evaluate_lambda(A, Out, Bs, Ns, Bsi, Nsi) :-
   evaluate_(A, _, Out, Bs, Ns, Bsi, Nsi).
 
@@ -29,7 +33,12 @@ evaluate_(A, Ti, Out, Bs, [N|Ns], Bsi, Ns) :-
   atom_de_bruijn(A, T, Ti),
   put_assoc(N, Bs, (T, Ti), Bsi),
   atom_term(Ai, Ti),
-  atom_list_concat([N, ' = ', A, '\n(de Bruijn) ', Ai], Out).
+  show_terms(N, A, Ai, Out).
+
+% Show a λ-term with its corresponding name and
+% version with de Bruijn indices
+show_terms(N, A, Ai, S) :-
+  atom_list_concat([N, ' = ', A, '\n(de Bruijn) ', Ai], S).
 
 evaluate_reduction(In, Outi, Bs, Ns, Bsi, Nsi, Reduce) :-
   x_reduction(Reduce, In, A), atom_de_bruijn(A, N),

@@ -43,7 +43,7 @@ Currently implemented features:
   de Bruijn terms which use [de Bruijn indices](https://en.wikipedia.org/wiki/De_Bruijn_index)
 * β-reduction and η-reduction for λ-terms using de Bruijn indices
 * read-evaluate loop:
-  - λ-term reading
+  - λ-term reading and printing
   - α-equivalence checking (for already defined terms)
   - direct β- and η- reductions
 
