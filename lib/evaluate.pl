@@ -61,7 +61,7 @@ evaluate_equivalence(In, Out, Bs, Ns, Bs, Ns) :-
   get_assoc(Mf, Bs, (M, Mi)), get_assoc(Nf, Bs, (N, Ni)),
   atom_term(Ma, M), atom_term(Na, N),
   (eq(Mi, Ni) -> Eq = true; Eq = false),
-  atom_list_concat([Ma, ' =α= ', Na, '\n', Eq, '\n'], Out).
+  atom_list_concat([Ma, ' =α= ', Na, '\n', Eq], Out).
 
 equivalence(A, M, N) :-
   atom_chars(A, CS), once(phrase(equivalence(Ms, Ns), CS)),
