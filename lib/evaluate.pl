@@ -16,7 +16,7 @@ evaluate_input(In, Out, Bs, Ns, Bsi, Nsi) :-
   evaluate_bad_input(In, Out).
 
 % Exit if the user has entered 'quit'
-evaluate_quit("quit", _) :- halt.
+evaluate_quit(quit, _) :- halt.
 
 % Store and show a λ-term with its corresponding name and
 % version with de Bruijn indices

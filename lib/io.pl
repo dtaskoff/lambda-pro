@@ -5,7 +5,8 @@
 set_prompt :- prompt(_, 'λ-προ: ').
 
 % Read a line from the user's input
-read_input(In) :- read_string(user_input, "\n", "\t", _, In).
+read_input(In) :- read_string(user_input, "\n", "\t", _, S),
+  atom_string(In, S).
 
 % Otherwise it'd be rewl
 print_output(Out) :- writeln(Out).
