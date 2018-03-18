@@ -2,8 +2,9 @@
   [ evaluate_input/6
   ]).
 
-:- use_module(terms, [atom_term/2, eq/2]).
-:- use_module(reduction, [b_reduce/2, e_reduce/2]).
+:- use_module(terms, [atom_term/2, eq/2, free_variables/2]).
+:- use_module(indices, [index_of/3]).
+:- use_module(reduction, [b_reduce/2, e_reduce/2, substitute/4]).
 :- use_module(helpers, [atom_de_bruijn/2, atom_de_bruijn/3]).
 :- use_module(utils, [atom_list_concat/2]).
 
@@ -41,10 +42,21 @@ show_terms(N, A, Ai, S) :-
   atom_list_concat([N, ' = ', A, '\n(de Bruijn) ', Ai], S).
 
 evaluate_reduction(In, Outi, Bs, Ns, Bsi, Nsi, Reduce) :-
-  x_reduction(Reduce, In, A), atom_de_bruijn(A, N),
-  call(Reduce, N, Ni), evaluate_(Ai, Ni, Out, Bs, Ns, Bsi, Nsi),
+  x_reduction(Reduce, In, A),
+  (evaluate_substitution(A, T, Bs, S);
+    atom_de_bruijn(A, T), S = ''),
+  call(Reduce, T, Ti), evaluate_(Ai, Ti, Out, Bs, Ns, Bsi, Nsi),
   atom_reduce(R, Reduce),
-  atom_list_concat([A, R, Ai, '\n', Out], Outi).
+  atom_list_concat([S, R, Ai, '\n', Out], Outi).
+
+% Substitutes the first free variable in the atom A
+% that is bound in the environment
+evaluate_substitution(A, Mi, Bs, Out) :-
+  atom_de_bruijn(A, T, M),
+  free_variables(T, V), member(X, V),
+  get_assoc(X, Bs, (_, N)), index_of(X, T, I),
+  substitute(M, I, N, Mi), atom_de_bruijn(Aii, Mi),
+  atom_list_concat([A, ' =α= ', Aii], Out).
 
 atom_reduce(' -β> ', b_reduce).
 atom_reduce(' -η> ', e_reduce).
