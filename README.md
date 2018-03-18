@@ -4,9 +4,14 @@
 How to use:
 -----
 * install a version of [SWI-Prolog](http://www.swi-prolog.org/)
-* run SWI-Prolog
 
 
+```bash
+./repl.sh # start the λ-προ repl
+λ-προ: 
+```
+
+If you want to play with some of the predicates in `swipl`:
 ```pl
 > swipl
 Welcome to SWI-Prolog
@@ -15,10 +20,13 @@ true.
 
 ?-
 ```
+
 * you can play with the available features here
 * note: `halt.` exits `swipl`.
 
-```bash ./test.sh``` runs the test suite.
+```bash
+./test.sh # run the test suite
+```
 
 Syntax:
 -----
@@ -34,6 +42,7 @@ Currently implemented features:
 * convert between user-friendly strings, λ-terms and
   de Bruijn terms which use [de Bruijn indices](https://en.wikipedia.org/wiki/De_Bruijn_index)
 * β-reduction and η-reduction for λ-terms using de Bruijn indices
+* read-evaluate loop (supports only λ-term reading currently)
 
 ```pl
 ?- atom_term(x, T).
