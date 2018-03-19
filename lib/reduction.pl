@@ -32,12 +32,15 @@ up(parentheses(M), parentheses(Mi), K, L) :- up(M, Mi, K, L).
 % What is a β-reduction?
 % (x. M) N >> M[x -> N]
 b_reduce(lambda(M), lambda(N)) :- b_reduce(M, N).
-b_reduce(application(lambda(M), parentheses(N)), Mi) :-
-  b_reduce(application(lambda(M), N), Mi), !.
-b_reduce(application(lambda(M), N), Mii) :- up(N, Ni, 1), substitute(M, 0, Ni, Mi), up(Mi, Mii, -1), !.
-b_reduce(application(parentheses(lambda(M)), N), Mi) :- b_reduce(application(lambda(M), N), Mi).
+b_reduce(application(parentheses(M), N), Mi) :-
+  b_reduce(application(M, N), Mi), !.
+b_reduce(application(M, parentheses(N)), parentheses(Mi)) :-
+  b_reduce(application(M, N), Mi), !.
+b_reduce(application(lambda(M), N), Mii) :- up(N, Ni, 1),
+  substitute(M, 0, Ni, Mi), up(Mi, Mii, -1), !.
 b_reduce(application(M, N), application(Mi, Ni)) :-
   b_reduce(M, Mi); b_reduce(N, Ni).
+b_reduce(parentheses(M), parentheses(N)) :- b_reduce(M, N).
 
 % What is an η-reduction?
 % (x. M x) >> M, if x is not free in M
@@ -46,10 +49,9 @@ e_reduce(lambda(application(M, X)), M) :-
 e_reduce(lambda(parentheses(M)), parentheses(N)) :-
   e_reduce(lambda(M), N), !.
 e_reduce(lambda(M), lambda(N)) :- e_reduce(M, N).
-e_reduce(parentheses(M), parentheses(N)) :-
-  e_reduce(M, N).
 e_reduce(application(M, N), application(Mi, Ni)) :-
   e_reduce(M, Mi); e_reduce(N, Ni).
+e_reduce(parentheses(M), parentheses(N)) :- e_reduce(M, N).
 
 free_in(X, M) :- once(free_in(X, M, 0)).
 free_in(X, X, L) :- number(X), X >= L.

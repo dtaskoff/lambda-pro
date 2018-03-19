@@ -1,36 +1,39 @@
 :- module(evaluate,
-  [ evaluate_input/6
+  [ evaluate_input/8
   ]).
 
 :- use_module(terms, [atom_term/2, eq/2, free_variables/2]).
-:- use_module(indices, [index_of/3]).
+:- use_module(indices, [index_of/4]).
 :- use_module(reduction, [b_reduce/2, e_reduce/2, substitute/4]).
-:- use_module(helpers, [atom_de_bruijn/2, atom_de_bruijn/3]).
+:- use_module(helpers, [atom_de_bruijn/4, atom_de_bruijn/5]).
 :- use_module(utils, [atom_list_concat/2]).
 
-evaluate_input(In, Out, Bs, Ns, Bsi, Nsi) :-
+evaluate_input(In, Out, Bs, Bsi, Ns, Nsi, I, Ii) :-
   evaluate_quit(In, Out);
-  evaluate_reduction(In, Out, Bs, Ns, Bsi, Nsi, _);
-  evaluate_equivalence(In, Out, Bs, Ns, Bsi, Nsi);
-  evaluate_lambda(In, Out, Bs, Ns, Bsi, Nsi);
-  evaluate_bad_input(In, Out), Ns = Nsi, Bs = Bsi.
+  evaluate_reduction(In, Out, Bs, Bsi, Ns, Nsi, I, Ii, _);
+  evaluate_equivalence(In, Out, Bs, Bsi, Ns, Nsi, I, Ii);
+  evaluate_lambda(In, Out, Bs, Bsi, Ns, Nsi, I, Ii);
+  evaluate_bad_input(In, Out), Nsi = Ns, Bsi = Bs, Ii = I.
 
 % Exit if the user has entered 'quit'
 evaluate_quit(quit, _) :- halt.
 
 % Store and show a λ-term with its corresponding name and
 % version with de Bruijn indices
-evaluate_lambda(A, Out, Bs, Ns, Bs, Ns) :-
+%
+% Look if A is a name bound in the environment
+evaluate_lambda(A, Out, Bs, Bs, Ns, Ns, I, I) :-
   get_assoc(A, Bs, (Ti, Tii)),
   atom_term(Ai, Ti), atom_term(Aii, Tii),
   show_terms(A, Ai, Aii, Out), !.
-evaluate_lambda(A, Out, Bs, Ns, Bsi, Nsi) :-
-  evaluate_(A, _, Out, Bs, Ns, Bsi, Nsi).
+% Add a new λ-term to the environment
+evaluate_lambda(A, Out, Bs, Bsi, Ns, Nsi, I, Ii) :-
+  evaluate_(A, _, Out, Bs, Bsi, Ns, Nsi, I, Ii).
 
 % This is used to optimise the number of conversions
 % between the formats
-evaluate_(A, Ti, Out, Bs, [N|Ns], Bsi, Ns) :-
-  atom_de_bruijn(A, T, Ti),
+evaluate_(A, Ti, Out, Bs, Bsi, [N|Ns], Ns, I, Ii) :-
+  atom_de_bruijn(A, T, Ti, I, Ii),
   put_assoc(N, Bs, (T, Ti), Bsi),
   atom_term(Ai, Ti),
   show_terms(N, A, Ai, Out).
@@ -40,21 +43,22 @@ evaluate_(A, Ti, Out, Bs, [N|Ns], Bsi, Ns) :-
 show_terms(N, A, Ai, S) :-
   atom_list_concat([N, ' = ', A, '\n(de Bruijn) ', Ai], S).
 
-evaluate_reduction(In, Outi, Bs, Ns, Bsi, Nsi, Reduce) :-
-  member(Reduce, [b_reduce, e_reduce]), x_reduction(Reduce, In, A),
-  (evaluate_substitution(A, T, Bs, S);
-    atom_de_bruijn(A, T), S = ''),
-  call(Reduce, T, Ti), evaluate_(Ai, Ti, Out, Bs, Ns, Bsi, Nsi),
+evaluate_reduction(In, Outi, Bs, Bsi, Ns, Nsi, I, Ii, Reduce) :-
+  x_reduction(Reduce, In, A),
+  (evaluate_substitution(A, T, S, Bs, I, Ii) -> true;
+    atom_de_bruijn(A, T, I, Ii), S = ''),
+  call(Reduce, T, Ti),
+  evaluate_(Ai, Ti, Out, Bs, Bsi, Ns, Nsi, I, I),
   atom_reduce(R, Reduce),
   atom_list_concat([S, R, Ai, '\n', Out], Outi).
 
 % Substitutes the first free variable in the atom A
 % that is bound in the environment
-evaluate_substitution(A, Mi, Bs, Out) :-
-  atom_de_bruijn(A, T, M),
-  free_variables(T, V), member(X, V),
-  get_assoc(X, Bs, (_, N)), index_of(X, T, I),
-  substitute(M, I, N, Mi), atom_de_bruijn(Aii, Mi),
+evaluate_substitution(A, Mi, Out, Bs, I, Ii) :-
+  atom_de_bruijn(A, T, M, I, Ii),
+  free_variables(T, V), memberchk(X, V),
+  get_assoc(X, Bs, (_, N)), index_of(X, T, J, I),
+  substitute(M, J, N, Mi), atom_de_bruijn(Aii, Mi, Ii, Ii),
   atom_list_concat([A, ' =α= ', Aii], Out).
 
 atom_reduce(' -β> ', b_reduce).
@@ -67,7 +71,7 @@ x_reduction(X, A, Ai) :-
 x_reduction(b_reduce, A) --> [b, e, t, a, ' '|A].
 x_reduction(e_reduce, A) --> [e, t, a, ' '|A].
 
-evaluate_equivalence(In, Out, Bs, Ns, Bs, Ns) :-
+evaluate_equivalence(In, Out, Bs, Ns, Ns, Bs, I, I) :-
   equivalence(In, Mf, Nf),
   get_assoc(Mf, Bs, (M, Mi)), get_assoc(Nf, Bs, (N, Ni)),
   atom_term(Ma, M), atom_term(Na, N),
@@ -82,5 +86,4 @@ equivalence([C|Cs], N) --> [C], equivalence(Cs, N), { C \= ' ' }.
 equivalence([], N) --> [' ', =, =, ' '|N].
 
 % Dislay a message if the input isn't valid
-evaluate_bad_input(In, Out) :-
-  atom_list_concat(['Bad input: ', In], Out).
+evaluate_bad_input(In, Out) :- atom_concat('Bad input: ', In, Out).

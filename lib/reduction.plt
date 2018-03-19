@@ -3,6 +3,7 @@
   [ free_in/2, e_reduce/2
   , up/3, substitute/4, b_reduce/2
   ]).
+:- use_module(terms, [eq/2]).
 :- use_module(test_terms).
 
 test(free_in,
@@ -60,5 +61,7 @@ test(b_reduce) :- b_reduce(
   application(lambda(lambda(application(42, 1))),
     lambda(application(0, 1))),
   lambda(application(41, parentheses(lambda(application(0, 2)))))).
+test(b_reduce) :- W = lambda(application(0, 0)), WW = application(W, W),
+  b_reduce(WW, WWi), eq(WWi, WW).
 
 :- end_tests(reduction).
