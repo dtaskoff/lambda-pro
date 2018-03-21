@@ -10,13 +10,31 @@
 
 evaluate_input(In, Out, Bs, Bsi, Ns, Nsi, I, Ii) :-
   evaluate_quit(In, Out);
-  evaluate_reduction(In, Out, Bs, Bsi, Ns, Nsi, I, Ii, _);
+  evaluate_name_binding(In, Out, Bs, Bsi, Ns, Nsi, I, Ii);
+  evaluate_reduction(In, Out, Bs, Bsi, Ns, Nsi, I, Ii);
   evaluate_equivalence(In, Out, Bs, Bsi, Ns, Nsi, I, Ii);
   evaluate_lambda(In, Out, Bs, Bsi, Ns, Nsi, I, Ii);
   evaluate_bad_input(In, Out), Nsi = Ns, Bsi = Bs, Ii = I.
 
 % Exit if the user has entered 'quit'
 evaluate_quit(quit, _) :- halt.
+
+% Bind a term to a name. If the name is already used,
+% display an 'error' message
+evaluate_name_binding(In, Out, Bs, Bsi, Ns, Nsi, I, Ii) :-
+  name_binding(In, N, B),
+  (get_assoc(N, Bs, _) ->
+    atom_list_concat(['`', N, '` is already bound'], Msg),
+    Bsi = Bs, Nsi = Ns, Ii = I,
+    evaluate_bad_input(Msg, Out);
+    evaluate_input(B, Out, Bs, Bsi, [N|Ns], Nsi, I, Ii)).
+
+name_binding(A, N, B) :-
+  atom_chars(A, Cs), once(phrase(name_binding(Ns, Bs), Cs)),
+  atom_list_concat(Ns, N), atom_list_concat(Bs, B).
+
+name_binding([C|Cs], B) --> [C], name_binding(Cs, B), { C \= ' ' }.
+name_binding([], B) --> [' ', =, ' '|B].
 
 % Store and show a λ-term with its corresponding name and
 % version with de Bruijn indices
@@ -43,7 +61,7 @@ evaluate_(A, Out, Bs, Bsi, [N|Ns], Ns, I, Ii) :-
 show_terms(N, A, Ai, S) :-
   atom_list_concat([N, ' = ', A, '\n(de Bruijn) ', Ai], S).
 
-evaluate_reduction(In, Outi, Bs, Bsi, Ns, Nsi, I, Iii, Reduce) :-
+evaluate_reduction(In, Outi, Bs, Bsi, Ns, Nsi, I, Iii) :-
   x_reduction(Reduce, In, A),
   (evaluate_substitutions(A, T, S, Bs, I, _) -> true;
     atom_to_term(A, T, normal, I, _), S = ''),
