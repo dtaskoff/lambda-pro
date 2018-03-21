@@ -19,9 +19,12 @@ term(parentheses(T)) :- term(T).
 % Convert between user-friendly λ-terms and internally represented λ-terms
 % term_to_atom(Term, Atom, Type), where
 % Type ::= normal | de_bruijn
+term_to_atom(parentheses(T), A, Ty) :- term_to_atom(T, A, Ty), !.
 term_to_atom(T, A, Ty) :- nonvar(T), nonvar(Ty), once(term_to_atom_(T, A, Ty)).
 term_to_atom_(X-_, X, normal).
 term_to_atom_(_-I, I, de_bruijn).
+term_to_atom_(parentheses(X-_), X, normal).
+term_to_atom_(parentheses(_-I), I, de_bruijn).
 term_to_atom_(application(application(M, N), P), A, Ty) :-
   term_to_atom_(application(parentheses(application(M, N)), P), A, Ty).
 term_to_atom_(application(lambda(X, M), N), A, Ty) :-
