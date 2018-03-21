@@ -6,7 +6,7 @@
 % <λ-term> ::= <λ-abstraction> | <application> | <variable> | (<λ-term>)
 % <λ-abstraction> ::= <variable>. <λ-term> | λ <λ-term>
 % <application> ::= <λ-term> <λ-term>
-% <variable> ::= s where s ∈ Σ⁺ | n where n ∈ N
+% <variable> ::= s-i where s ∈ Σ⁺ and i ∈ N
 %
 % Internally, both variable name and index of de Bruijn are stored:
 term(X-I) :- atom(X), number(I).
