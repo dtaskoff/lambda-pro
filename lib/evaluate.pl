@@ -1,15 +1,19 @@
 :- module(evaluate, [evaluate_input/4]).
 
+
 :- use_module(terms,
   [ term_to_atom/3, atom_to_term/5
   , index_of/3, eq/2, free_variables/2]).
 :- use_module(reduction, [b_reduce/2, e_reduce/2, substitute/4]).
 :- use_module(utils, [atom_list_concat/2]).
+:- use_module(io, [read_file/2]).
+
 
 % evaluate_input(Input, Output, StateIn, StateOut), where
 % State = (Bindings, Names, NextIndex)
 evaluate_input(In, Out, S, Si) :-
   evaluate_quit(In, Out), Si = S;
+  evaluate_load(In, Out, S, Si);
   evaluate_name_binding(In, Out, S, Si);
   evaluate_reduction(In, Out, S, Si);
   evaluate_equivalence(In, Out, S, Si);
@@ -18,6 +22,21 @@ evaluate_input(In, Out, S, Si) :-
 
 % Exit if the user has entered 'quit'
 evaluate_quit(quit, _) :- halt.
+
+% Load a file into the repl
+evaluate_load(In, Out, S, Si) :- file_to_load(In, F), load_file(F, Out, S, Si).
+
+load_file(F, Out, S, Si) :- read_file(F, Lines),
+  foldl([Line, (Outii, Sii), (Outiv, Siii)]>>
+    (evaluate_input(Line, Outiii, Sii, Siii),
+      atom_list_concat([Outii, '\n', Outiii], Outiv)),
+    Lines, ('', S), (Out, Si)).
+
+file_to_load(A, F) :-
+  atom_chars(A, Cs), once(phrase(file_to_load(Fs), Cs)),
+  atom_list_concat(Fs, F).
+
+file_to_load(F) --> [l, o, a, d, ' '|F].
 
 % Bind a term to a name. If the name is already used,
 % display an 'error' message
