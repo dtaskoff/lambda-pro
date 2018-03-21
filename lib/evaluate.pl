@@ -39,14 +39,20 @@ name_binding([], B) --> [' ', =, ' '|B].
 % Store and show a λ-term with its corresponding name and
 % version with de Bruijn indices
 %
-% Look if A is a name bound in the environment
-evaluate_lambda(A, Out, Bs, Bs, Ns, Ns, I, I) :-
-  get_assoc(A, Bs, T),
-  term_to_atom(T, Ai, normal), term_to_atom(T, Aii, de_bruijn),
-  show_terms(A, Ai, Aii, Out), !.
-% Add a new λ-term to the environment
-evaluate_lambda(A, Out, Bs, Bsi, Ns, Nsi, I, Ii) :-
-  evaluate_(A, Out, Bs, Bsi, Ns, Nsi, I, Ii).
+% If A is x?, look if x is a name bound in the environment,
+% else add a new λ-term to the environment
+evaluate_lambda(In, Out, Bs, Bsi, Ns, Nsi, I, Ii) :-
+  sub_atom(In, _, 1, 0, S),
+  S == ? ->
+    Bsi = Bs, Nsi = Ns, Ii = I,
+    sub_atom(In, 0, _, 1, A),
+    (get_assoc(A, Bs, T) ->
+      term_to_atom(T, Ai, normal),
+      term_to_atom(T, Aii, de_bruijn),
+      show_terms(A, Ai, Aii, Out);
+      atom_list_concat(['`', A, '` is not defined'], Msg),
+      evaluate_bad_input(Msg, Out));
+    evaluate_(In, Out, Bs, Bsi, Ns, Nsi, I, Ii).
 
 % This is used to optimise the number of conversions
 % between the formats
