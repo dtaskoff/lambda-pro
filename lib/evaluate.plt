@@ -53,21 +53,21 @@ test(evaluate_beta_reduction) :-
   Ni = application(N, N),
   list_to_assoc([f0-N], Bs),
   evaluate:evaluate_reduction(
-    'beta f0 f0', Out, Bs, Bsi, [f1], [], 42, 42, b_reduce),
+    'beta f0 f0', Out, Bs, Bsi, [f1], [], 42, 42),
   get_assoc(f1, Bsi, Nii), eq(Ni, Nii),
   W = '(x. x x) (x. x x)',
   atom_to_term(W, TW, normal, 42, 42),
   term_to_atom(TW, Wi, de_bruijn),
-  atom_list_concat(['f0 f0 =α= ', W, ' -β> (', W, ')\nf1 = (',
+  atom_list_concat(['f0 f0 =α= ', W, '\n -β> (', W, ')\nf1 = (',
     W, ')\n(de Bruijn) (', Wi, ')'], Out).
 
 test(evaluate_eta_reduction) :-
   T = lambda(x, application(y-43, x-0)),
   list_to_assoc([f0-T], Bs),
   evaluate:evaluate_reduction(
-    'eta f0', Out, Bs, Bsi, [f1], [], 42, 41, e_reduce),
+    'eta f0', Out, Bs, Bsi, [f1], [], 42, 41),
   get_assoc(f1, Bsi, Ti), eq(Ti, y-42),
-  atom_list_concat(['f0 =α= (x. y x) -η> (y)\nf1 = ',
+  atom_list_concat(['f0 =α= (x. y x)\n -η> (y)\nf1 = ',
     '(y)', '\n(de Bruijn) (42)'], Out).
 
 :- end_tests(evaluate).
