@@ -103,8 +103,8 @@ evaluate_substitutions(A, Mi, Out, Bs, I, Iii) :-
   evaluate_substitution(A, M, Bs, I, Ii),
   term_to_atom(M, Ai, normal),
   (evaluate_substitutions(Ai, Mi, S, Bs, Ii, Iii) ->
-    atom_list_concat([A, ' =ρ= ', S], Out);
-    Mi = M, atom_list_concat([A, ' =ρ= ', Ai], Out)).
+    atom_list_concat([A, '\n =ρ= ', S], Out);
+    Mi = M, atom_list_concat([A, '\n =ρ= ', Ai], Out)).
 
 % Substitute the first free variable in an atom A
 % that is bound in the environment
