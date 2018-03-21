@@ -56,20 +56,23 @@ f3 = f0 f0
 You can see a single step of β-reduction:
 ```
 λ-προ: beta f3
-f3 =ρ= f0 f0 =ρ= (x. x x) (x. x x)
+f3
+ =ρ= f0 f0
+ =ρ= (x. x x) (x. x x)
  -β> (x. x x) (x. x x)
 f4 = (x. x x) (x. x x)
 (de Bruijn) (λ 0 0) (λ 0 0)
 ```
 Or a single step of η-reduction:
 ```
-λ-προ: x. (y. y) x
-f5 = x. (y. y) x
-(de Bruijn) λ (λ 0) 0
+λ-προ: x. y. x y
+f5 = x. y. x y
+(de Bruijn) λ λ 1 0
 λ-προ: eta f5
-f5 =ρ= x. (y. y) x
- -η> y. y
-f6 = y. y
+f5
+ =ρ= x. y. x y
+ -η> x. x
+f6 = x. x
 (de Bruijn) λ 0
 ```
 Or check for α-equivalence of λ-terms:
@@ -89,6 +92,27 @@ true
 λ-προ: f8 == f9
 u. u v =α= u. v u ?
 false
+```
+There are also transitive and reflexive closures for the reductions:
+```
+λ-προ: c5 = f. x. f (f (f x)) 
+c5 = f. x. f (f (f x))
+(de Bruijn) λ λ 1 (1 (1 0))
+λ-προ: beta* c5 succ zero
+c5 succ zero
+ =ρ= (f. x. f (f (f x))) succ zero
+ -β>> succ (succ (succ zero))
+f10 = succ (succ (succ zero))
+(de Bruijn) 4195 (4195 (4195 4194))
+λ-προ: x. y. z. x y z
+f11 = x. y. z. x y z
+(de Bruijn) λ λ λ 2 1 0
+λ-προ: eta* f11
+f11
+ =ρ= x. y. z. x y z
+ -η>> x. x
+f12 = x. x
+(de Bruijn) λ 0
 ```
 You can also load a file with defined λ-terms (see [this one](./combinators.lpro) for example):
 ```
