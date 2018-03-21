@@ -4,7 +4,9 @@
 :- use_module(terms,
   [ term_to_atom/3, atom_to_term/5
   , index_of/3, eq/2, free_variables/2]).
-:- use_module(reduction, [b_reduce/2, e_reduce/2, substitute/4]).
+:- use_module(reduction,
+    [ b_reduce/2, b_reducetr/2
+    , e_reduce/2, e_reducetr/2, substitute/4]).
 :- use_module(utils, [atom_list_concat/2]).
 :- use_module(io, [read_file/2]).
 
@@ -114,14 +116,18 @@ evaluate_substitution(A, M, Bs, I, Ii) :-
   get_assoc(X, Bs, N), substitute(T, X, N, M).
 
 atom_reduce(' -β> ', b_reduce).
+atom_reduce(' -β>> ', b_reducetr).
 atom_reduce(' -η> ', e_reduce).
+atom_reduce(' -η>> ', e_reducetr).
 
 x_reduction(X, A, Ai) :-
   atom_chars(A, CS), once(phrase(x_reduction(X, As), CS)),
   atom_list_concat(As, Ai).
 
 x_reduction(b_reduce, A) --> [b, e, t, a, ' '|A].
+x_reduction(b_reducetr, A) --> [b, e, t, a, *, ' '|A].
 x_reduction(e_reduce, A) --> [e, t, a, ' '|A].
+x_reduction(e_reducetr, A) --> [e, t, a, *, ' '|A].
 
 evaluate_equivalence(In, Out, S, S) :-
   equivalence(In, Mf, Nf),

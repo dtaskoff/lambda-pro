@@ -1,5 +1,6 @@
 :- module(reduction,
-  [ b_reduce/2, substitute/4, up/3, e_reduce/2, free_in/2
+  [ b_reduce/2, b_reducetr/2, substitute/4, up/3
+  , e_reduce/2, e_reducetr/2, free_in/2
   ]).
 % Definitions of β-reduction and η-reduction for λ-terms
 
@@ -42,12 +43,18 @@ b_reduce(application(M, N), application(Mi, N)) :- b_reduce(M, Mi), !.
 b_reduce(application(M, N), application(M, Ni)) :- b_reduce(N, Ni).
 b_reduce(parentheses(M), parentheses(N)) :- b_reduce(M, N).
 
+b_reducetr(T, Tii) :- b_reduce(T, Ti), b_reducetr(Ti, Tii), !.
+b_reducetr(T, T).
+
 % What is an η-reduction?
 % (x. M x) >> M, if x is not free in M
-e_reduce(lambda(X, application(M, X-_)), M) :- not(free_in(X, M)), !.
+e_reduce(lambda(X, application(M, X-_)), N) :- not(free_in(X, M)), up(M, N, -1), !.
 e_reduce(lambda(X, M), lambda(X, N)) :- e_reduce(M, N).
 e_reduce(application(M, N), application(Mi, Ni)) :- once(e_reduce(M, Mi); e_reduce(N, Ni)).
 e_reduce(parentheses(M), parentheses(N)) :- e_reduce(M, N).
+
+e_reducetr(T, Tii) :- e_reduce(T, Ti), e_reducetr(Ti, Tii), !.
+e_reducetr(T, T).
 
 free_in(X, M) :- once(free_in(X, M, 0)).
 free_in(X, X-I, L) :- I >= L.
