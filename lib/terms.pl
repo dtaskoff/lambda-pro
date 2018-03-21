@@ -25,8 +25,8 @@ term_to_atom_(X-_, X, normal).
 term_to_atom_(_-I, I, de_bruijn).
 term_to_atom_(parentheses(X-_), X, normal).
 term_to_atom_(parentheses(_-I), I, de_bruijn).
-term_to_atom_(application(application(M, N), P), A, Ty) :-
-  term_to_atom_(application(parentheses(application(M, N)), P), A, Ty).
+term_to_atom_(application(M, application(N, P)), A, Ty) :-
+  term_to_atom_(application(M, parentheses(application(N, P))), A, Ty).
 term_to_atom_(application(lambda(X, M), N), A, Ty) :-
   term_to_atom_(application(parentheses(lambda(X, M)), N), A, Ty).
 term_to_atom_(application(M, N), A, Ty) :- term_to_atom_(M, MA, Ty), term_to_atom_(N, NA, Ty),
@@ -54,8 +54,12 @@ lmd(lambda(X, M), normal, (B, B, I, Ii, L)) --> nam(X),
 lmd(lambda(N, M), de_bruijn, (B, B, [N|Ns], Nsi, L)) --> ['λ', ' '],
   { J is -L, Li is L + 1, put_assoc(J, B, N, Bi) },
   trm(M, de_bruijn, (Bi, _, Ns, Nsi, Li)).
-app(application(M, N), Ty, (B, Bii, V, Vii, L)) -->
-  fnc(M, Ty, (B, Bi, V, Vi, L)), [' '], trm(N, Ty, (Bi, Bii, Vi, Vii, L)).
+app(App, Ty, (B, Bii, V, Vii, L)) -->
+  fnc(M, Ty, (B, Bi, V, Vi, L)), [' '], trm(N, Ty, (Bi, Bii, Vi, Vii, L)),
+  { push_app(M, N, App) }.
+% Reorder applications to match their left associativity
+push_app(M, application(N, P), application(Q, P)) :- push_app(M, N, Q), !.
+push_app(M, N, application(M, N)).
 fnc(M, Ty, S) --> par(M, Ty, S) | lmd(M, Ty, S) | vrb(M, Ty, S).
 vrb(X-J, normal, (B, Bi, I, Ii, L)) --> nam(X),
   { get_assoc(X, B, K) -> J is K + L, Bi = B, Ii = I; J is I + L, Ii is I - 1, put_assoc(X, B, J, Bi) }.
