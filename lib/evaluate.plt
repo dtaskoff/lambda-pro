@@ -58,7 +58,7 @@ test(evaluate_beta_reduction) :-
   W = '(x. x x) (x. x x)',
   atom_to_term(W, TW, normal, 42, 42),
   term_to_atom(TW, Wi, de_bruijn),
-  atom_list_concat(['f0 f0 =α= ', W, '\n -β> ', W, '\nf1 = ',
+  atom_list_concat(['f0 f0 =ρ= ', W, '\n -β> ', W, '\nf1 = ',
     W, '\n(de Bruijn) ', Wi], Out).
 
 test(evaluate_eta_reduction) :-
@@ -67,7 +67,7 @@ test(evaluate_eta_reduction) :-
   evaluate:evaluate_reduction(
     'eta f0', Out, (Bs, [f1], 42), (Bsi, [], 41)),
   get_assoc(f1, Bsi, Ti), eq(Ti, y-42),
-  atom_list_concat(['f0 =α= x. y x\n -η> y\nf1 = ',
+  atom_list_concat(['f0 =ρ= x. y x\n -η> y\nf1 = ',
     'y', '\n(de Bruijn) 42'], Out).
 
 :- end_tests(evaluate).
