@@ -38,8 +38,8 @@ b_reduce(application(M, parentheses(N)), parentheses(Mi)) :-
   b_reduce(application(M, N), Mi), !.
 b_reduce(application(lambda(X, M), N), Mii) :- up(N, Ni, 1),
   substitute(M, X, Ni, Mi), up(Mi, Mii, -1), !.
-b_reduce(application(M, N), application(Mi, Ni)) :-
-  b_reduce(M, Mi); b_reduce(N, Ni).
+b_reduce(application(M, N), application(Mi, N)) :- b_reduce(M, Mi), !.
+b_reduce(application(M, N), application(M, Ni)) :- b_reduce(N, Ni).
 b_reduce(parentheses(M), parentheses(N)) :- b_reduce(M, N).
 
 % What is an η-reduction?
