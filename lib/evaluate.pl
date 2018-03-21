@@ -79,11 +79,13 @@ x_reduction(X, A, Ai) :-
 x_reduction(b_reduce, A) --> [b, e, t, a, ' '|A].
 x_reduction(e_reduce, A) --> [e, t, a, ' '|A].
 
-evaluate_equivalence(In, Out, Bs, Ns, Ns, Bs, I, I) :-
+evaluate_equivalence(In, Out, Bs, Bs, Ns, Ns, I, I) :-
   equivalence(In, Mf, Nf),
   get_assoc(Mf, Bs, M), get_assoc(Nf, Bs, N),
   term_to_atom(M, MA, normal), term_to_atom(N, NA, normal),
-  (eq(M, N) -> Eq = true; Eq = false),
+  atom_to_term(MA, Mn, normal, I, _),
+  atom_to_term(NA, Nn, normal, I, _),
+  (eq(Mn, Nn) -> Eq = true; Eq = false),
   atom_list_concat([MA, ' =α= ', NA, ' ?\n', Eq], Out).
 
 equivalence(A, M, N) :-
