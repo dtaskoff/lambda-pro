@@ -1,6 +1,4 @@
-:- module(evaluate,
-  [ evaluate_input/8
-  ]).
+:- module(evaluate, [evaluate_input/4]).
 
 :- use_module(terms,
   [ term_to_atom/3, atom_to_term/5
@@ -8,26 +6,28 @@
 :- use_module(reduction, [b_reduce/2, e_reduce/2, substitute/4]).
 :- use_module(utils, [atom_list_concat/2]).
 
-evaluate_input(In, Out, Bs, Bsi, Ns, Nsi, I, Ii) :-
-  evaluate_quit(In, Out);
-  evaluate_name_binding(In, Out, Bs, Bsi, Ns, Nsi, I, Ii);
-  evaluate_reduction(In, Out, Bs, Bsi, Ns, Nsi, I, Ii);
-  evaluate_equivalence(In, Out, Bs, Bsi, Ns, Nsi, I, Ii);
-  evaluate_lambda(In, Out, Bs, Bsi, Ns, Nsi, I, Ii);
-  evaluate_bad_input(In, Out), Nsi = Ns, Bsi = Bs, Ii = I.
+% evaluate_input(Input, Output, StateIn, StateOut), where
+% State = (Bindings, Names, NextIndex)
+evaluate_input(In, Out, S, Si) :-
+  evaluate_quit(In, Out), Si = S;
+  evaluate_name_binding(In, Out, S, Si);
+  evaluate_reduction(In, Out, S, Si);
+  evaluate_equivalence(In, Out, S, Si);
+  evaluate_lambda(In, Out, S, Si);
+  evaluate_bad_input(In, Out), Si = S.
 
 % Exit if the user has entered 'quit'
 evaluate_quit(quit, _) :- halt.
 
 % Bind a term to a name. If the name is already used,
 % display an 'error' message
-evaluate_name_binding(In, Out, Bs, Bsi, Ns, Nsi, I, Ii) :-
+evaluate_name_binding(In, Out, (Bs, Ns, I), Si) :-
   name_binding(In, N, B),
   (get_assoc(N, Bs, _) ->
     atom_list_concat(['`', N, '` is already bound'], Msg),
-    Bsi = Bs, Nsi = Ns, Ii = I,
+    Si = (Bs, Ns, I),
     evaluate_bad_input(Msg, Out);
-    evaluate_input(B, Out, Bs, Bsi, [N|Ns], Nsi, I, Ii)).
+    evaluate_input(B, Out, (Bs, [N|Ns], I), Si)).
 
 name_binding(A, N, B) :-
   atom_chars(A, Cs), once(phrase(name_binding(Ns, Bs), Cs)),
@@ -41,22 +41,22 @@ name_binding([], B) --> [' ', =, ' '|B].
 %
 % If A is x?, look if x is a name bound in the environment,
 % else add a new λ-term to the environment
-evaluate_lambda(In, Out, Bs, Bsi, Ns, Nsi, I, Ii) :-
-  sub_atom(In, _, 1, 0, S),
-  S == ? ->
-    Bsi = Bs, Nsi = Ns, Ii = I,
-    sub_atom(In, 0, _, 1, A),
-    (get_assoc(A, Bs, T) ->
-      term_to_atom(T, Ai, normal),
-      term_to_atom(T, Aii, de_bruijn),
-      show_terms(A, Ai, Aii, Out);
-      atom_list_concat(['`', A, '` is not defined'], Msg),
+evaluate_lambda(In, Out, S, Si) :-
+  sub_atom(In, _, 1, 0, End),
+  End == ? -> Si = S,
+    sub_atom(In, 0, _, 1, N),
+    S = (Bs, _, _),
+    (get_assoc(N, Bs, T) ->
+      term_to_atom(T, A, normal),
+      term_to_atom(T, Ai, de_bruijn),
+      show_terms(N, A, Ai, Out);
+      atom_list_concat(['`', N, '` is not defined'], Msg),
       evaluate_bad_input(Msg, Out));
-    evaluate_(In, Out, Bs, Bsi, Ns, Nsi, I, Ii).
+    evaluate_(In, Out, S, Si).
 
 % This is used to optimise the number of conversions
 % between the formats
-evaluate_(A, Out, Bs, Bsi, [N|Ns], Ns, I, Ii) :-
+evaluate_(A, Out, (Bs, [N|Ns], I), (Bsi, Ns, Ii)) :-
   atom_to_term(A, T, normal, I, Ii),
   put_assoc(N, Bs, T, Bsi),
   term_to_atom(T, Ai, de_bruijn),
@@ -67,15 +67,16 @@ evaluate_(A, Out, Bs, Bsi, [N|Ns], Ns, I, Ii) :-
 show_terms(N, A, Ai, S) :-
   atom_list_concat([N, ' = ', A, '\n(de Bruijn) ', Ai], S).
 
-evaluate_reduction(In, Outi, Bs, Bsi, Ns, Nsi, I, Iii) :-
+evaluate_reduction(In, Out, S, Si) :-
   x_reduction(Reduce, In, A),
-  (evaluate_substitutions(A, T, S, Bs, I, _) -> true;
-    atom_to_term(A, T, normal, I, _), S = ''),
+  S = (Bs, _, I),
+  (evaluate_substitutions(A, T, Subs, Bs, I, _) -> true;
+    atom_to_term(A, T, normal, I, _), Subs = ''),
   call(Reduce, T, Ti),
   term_to_atom(Ti, Ai, normal),
-  evaluate_(Ai, Out, Bs, Bsi, Ns, Nsi, I, Iii),
+  evaluate_(Ai, Outi, S, Si),
   atom_reduce(R, Reduce),
-  atom_list_concat([S, '\n', R, Ai, '\n', Out], Outi).
+  atom_list_concat([Subs, '\n', R, Ai, '\n', Outi], Out).
 
 % Substitute all free variables in an atom A
 % that are bound in the environment
@@ -103,8 +104,9 @@ x_reduction(X, A, Ai) :-
 x_reduction(b_reduce, A) --> [b, e, t, a, ' '|A].
 x_reduction(e_reduce, A) --> [e, t, a, ' '|A].
 
-evaluate_equivalence(In, Out, Bs, Bs, Ns, Ns, I, I) :-
+evaluate_equivalence(In, Out, S, S) :-
   equivalence(In, Mf, Nf),
+  S = (Bs, _, I),
   get_assoc(Mf, Bs, M), get_assoc(Nf, Bs, N),
   term_to_atom(M, MA, normal), term_to_atom(N, NA, normal),
   atom_to_term(MA, Mn, normal, I, _),

@@ -15,8 +15,8 @@ test(evaluate_,
           term(X, de_bruijn, atom, Ai)))) :-
     empty_assoc(Bs),
     (X == 42 ->
-      evaluate:evaluate_(A, Out, Bs, Bsi, [f0], [], 42, 41);
-      evaluate:evaluate_(A, Out, Bs, Bsi, [f0], [], I, I)),
+      evaluate:evaluate_(A, Out, (Bs, [f0], 42), (Bsi, [], 41));
+      evaluate:evaluate_(A, Out, (Bs, [f0], I), (Bsi, [],  I))),
     evaluate:show_terms(f0, A, Ai, Out),
     put_assoc(f0, Bs, T, Bsi).
 
@@ -24,8 +24,8 @@ test(evaluate_lambda,
   forall((term(X, name, atom, A),
           term(X, name, lambda, T),
           term(X, de_bruijn, atom, Ai)))) :-
-    list_to_assoc([f0-T], Bs),
-    evaluate:evaluate_lambda(f0, Out, Bs, Bs, Ns, Ns, I, I),
+    list_to_assoc([f0-T], Bs), S = (Bs, _, _),
+    evaluate:evaluate_lambda(f0, Out, S, S),
     evaluate:show_terms(f0, A, Ai, Out).
 
 test(evaluate_substitution,
@@ -53,7 +53,7 @@ test(evaluate_beta_reduction) :-
   Ni = application(N, N),
   list_to_assoc([f0-N], Bs),
   evaluate:evaluate_reduction(
-    'beta f0 f0', Out, Bs, Bsi, [f1], [], 42, 42),
+    'beta f0 f0', Out, (Bs, [f1], 42), (Bsi, [], 42)),
   get_assoc(f1, Bsi, Nii), eq(Ni, Nii),
   W = '(x. x x) (x. x x)',
   atom_to_term(W, TW, normal, 42, 42),
@@ -65,7 +65,7 @@ test(evaluate_eta_reduction) :-
   T = lambda(x, application(y-43, x-0)),
   list_to_assoc([f0-T], Bs),
   evaluate:evaluate_reduction(
-    'eta f0', Out, Bs, Bsi, [f1], [], 42, 41),
+    'eta f0', Out, (Bs, [f1], 42), (Bsi, [], 41)),
   get_assoc(f1, Bsi, Ti), eq(Ti, y-42),
   atom_list_concat(['f0 =α= x. y x\n -η> y\nf1 = ',
     'y', '\n(de Bruijn) 42'], Out).
