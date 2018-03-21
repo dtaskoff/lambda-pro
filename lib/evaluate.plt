@@ -2,7 +2,6 @@
 :- use_module(evaluate).
 :- use_module(test_terms).
 :- use_module(terms).
-:- use_module(helpers).
 :- use_module(utils).
 
 test(evaluate_bad_input,
@@ -11,33 +10,30 @@ test(evaluate_bad_input,
     evaluate:evaluate_bad_input(X, O).
 
 test(evaluate_,
-  forall((term(X, name, atom, A),
-          term(X, name, lambda, T),
-          term(X, de_bruijn, atom, Ai),
-          term(X, de_bruijn, lambda, N)))) :-
+  forall((term(X, normal, atom, A),
+          term(X, normal, term, T),
+          term(X, de_bruijn, atom, Ai)))) :-
     empty_assoc(Bs),
     (X == 42 ->
-      evaluate:evaluate_(A, N, Out, Bs, Bsi, [f0], [], 42, 41);
-      evaluate:evaluate_(A, N, Out, Bs, Bsi, [f0], [], I, I)),
+      evaluate:evaluate_(A, Out, Bs, Bsi, [f0], [], 42, 41);
+      evaluate:evaluate_(A, Out, Bs, Bsi, [f0], [], I, I)),
     evaluate:show_terms(f0, A, Ai, Out),
-    put_assoc(f0, Bs, (T, N), Bsi).
+    put_assoc(f0, Bs, T, Bsi).
 
 test(evaluate_lambda,
   forall((term(X, name, atom, A),
           term(X, name, lambda, T),
-          term(X, de_bruijn, atom, Ai),
-          term(X, de_bruijn, lambda, N)))) :-
-    list_to_assoc([f0-(T, N)], Bs),
+          term(X, de_bruijn, atom, Ai)))) :-
+    list_to_assoc([f0-T], Bs),
     evaluate:evaluate_lambda(f0, Out, Bs, Bs, Ns, Ns, I, I),
     evaluate:show_terms(f0, A, Ai, Out).
 
 test(evaluate_substitution,
-  forall((term(X, name, lambda, T),
-          term(X, de_bruijn, lambda, N)))) :-
-    list_to_assoc([f0-(T, N)], Bs),
+  forall(term(_, name, lambda, T))) :-
+    list_to_assoc([f0-T], Bs),
     evaluate:evaluate_substitution('f0 f0 (x. y)', M, _, Bs, 42, I),
     Ii is I + 2,
-    Mi = application(N, application(N, lambda(Ii))),
+    Mi = application(T, application(T, lambda(x, y-Ii))),
     eq(M, Mi).
 
 test(x_reduction_beta) :-
@@ -46,23 +42,25 @@ test(x_reduction_eta) :-
   evaluate:x_reduction(e_reduce, 'eta f0', 'f0').
 
 test(evaluate_beta_reduction) :-
-  N = lambda(application(0, 0)), Ni = application(N, N),
-  list_to_assoc([f0-(_, N)], Bs),
+  N = lambda(x, application(x-0, x-0)),
+  Ni = application(N, N),
+  list_to_assoc([f0-N], Bs),
   evaluate:evaluate_reduction(
-    'beta f0 f0', Out, Bs, Bsi, [f1], [], 42, 41, b_reduce),
-  get_assoc(f1, Bsi, (_, Nii)), eq(Ni, Nii),
-  W = '(x. x x) (x. x x)', atom_de_bruijn_atom(W, Wi, 42, 42),
+    'beta f0 f0', Out, Bs, Bsi, [f1], [], 42, 42, b_reduce),
+  get_assoc(f1, Bsi, Nii), eq(Ni, Nii),
+  W = '(x. x x) (x. x x)',
+  atom_to_term(W, TW, normal, 42, 42),
+  term_to_atom(TW, Wi, de_bruijn),
   atom_list_concat(['f0 f0 =α= ', W, ' -β> (', W, ')\nf1 = (',
     W, ')\n(de Bruijn) (', Wi, ')'], Out).
 
 test(evaluate_eta_reduction) :-
-  T = lambda(x, application(y, x)),
-  N = lambda(application(1, 0)),
-  list_to_assoc([f0-(T, N)], Bs),
+  T = lambda(x, application(y-43, x-0)),
+  list_to_assoc([f0-T], Bs),
   evaluate:evaluate_reduction(
     'eta f0', Out, Bs, Bsi, [f1], [], 42, 41, e_reduce),
-  get_assoc(f1, Bsi, (_, Ni)), eq(Ni, 1),
-  atom_list_concat(['f0 =α= (x. y x) -η> (x)\nf1 = ',
-    '(x)', '\n(de Bruijn) (1)'], Out).
+  get_assoc(f1, Bsi, Ti), eq(Ti, y-42),
+  atom_list_concat(['f0 =α= (x. y x) -η> (y)\nf1 = ',
+    '(y)', '\n(de Bruijn) (42)'], Out).
 
 :- end_tests(evaluate).

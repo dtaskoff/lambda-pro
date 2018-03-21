@@ -2,10 +2,10 @@
   [ evaluate_input/8
   ]).
 
-:- use_module(terms, [atom_term/2, eq/2, free_variables/2]).
-:- use_module(indices, [index_of/4]).
+:- use_module(terms,
+  [ term_to_atom/3, atom_to_term/5
+  , index_of/3, eq/2, free_variables/2]).
 :- use_module(reduction, [b_reduce/2, e_reduce/2, substitute/4]).
-:- use_module(helpers, [atom_de_bruijn/4, atom_de_bruijn/5]).
 :- use_module(utils, [atom_list_concat/2]).
 
 evaluate_input(In, Out, Bs, Bsi, Ns, Nsi, I, Ii) :-
@@ -23,19 +23,19 @@ evaluate_quit(quit, _) :- halt.
 %
 % Look if A is a name bound in the environment
 evaluate_lambda(A, Out, Bs, Bs, Ns, Ns, I, I) :-
-  get_assoc(A, Bs, (Ti, Tii)),
-  atom_term(Ai, Ti), atom_term(Aii, Tii),
+  get_assoc(A, Bs, T),
+  term_to_atom(T, Ai, normal), term_to_atom(T, Aii, de_bruijn),
   show_terms(A, Ai, Aii, Out), !.
 % Add a new λ-term to the environment
 evaluate_lambda(A, Out, Bs, Bsi, Ns, Nsi, I, Ii) :-
-  evaluate_(A, _, Out, Bs, Bsi, Ns, Nsi, I, Ii).
+  evaluate_(A, Out, Bs, Bsi, Ns, Nsi, I, Ii).
 
 % This is used to optimise the number of conversions
 % between the formats
-evaluate_(A, Ti, Out, Bs, Bsi, [N|Ns], Ns, I, Ii) :-
-  atom_de_bruijn(A, T, Ti, I, Ii),
-  put_assoc(N, Bs, (T, Ti), Bsi),
-  atom_term(Ai, Ti),
+evaluate_(A, Out, Bs, Bsi, [N|Ns], Ns, I, Ii) :-
+  atom_to_term(A, T, normal, I, Ii),
+  put_assoc(N, Bs, T, Bsi),
+  term_to_atom(T, Ai, de_bruijn),
   show_terms(N, A, Ai, Out).
 
 % Show a λ-term with its corresponding name and
@@ -43,23 +43,24 @@ evaluate_(A, Ti, Out, Bs, Bsi, [N|Ns], Ns, I, Ii) :-
 show_terms(N, A, Ai, S) :-
   atom_list_concat([N, ' = ', A, '\n(de Bruijn) ', Ai], S).
 
-evaluate_reduction(In, Outi, Bs, Bsi, Ns, Nsi, I, Ii, Reduce) :-
+evaluate_reduction(In, Outi, Bs, Bsi, Ns, Nsi, I, Iii, Reduce) :-
   x_reduction(Reduce, In, A),
-  (evaluate_substitution(A, T, S, Bs, I, Ii) -> true;
-    atom_de_bruijn(A, T, I, Ii), S = ''),
+  (evaluate_substitution(A, T, S, Bs, I, _) -> true;
+    atom_to_term(A, T, normal, I, _), S = ''),
   call(Reduce, T, Ti),
-  evaluate_(Ai, Ti, Out, Bs, Bsi, Ns, Nsi, I, I),
+  term_to_atom(Ti, Ai, normal),
+  evaluate_(Ai, Out, Bs, Bsi, Ns, Nsi, I, Iii),
   atom_reduce(R, Reduce),
   atom_list_concat([S, R, Ai, '\n', Out], Outi).
 
 % Substitutes the first free variable in the atom A
 % that is bound in the environment
-evaluate_substitution(A, Mi, Out, Bs, I, Ii) :-
-  atom_de_bruijn(A, T, M, I, Ii),
-  free_variables(T, V), memberchk(X, V),
-  get_assoc(X, Bs, (_, N)), index_of(X, T, J, I),
-  substitute(M, J, N, Mi), atom_de_bruijn(Aii, Mi, Ii, Ii),
-  atom_list_concat([A, ' =α= ', Aii], Out).
+evaluate_substitution(A, M, Out, Bs, I, Ii) :-
+  atom_to_term(A, T, normal, I, Ii),
+  free_variables(T, V), memberchk(X-_, V),
+  get_assoc(X, Bs, N),
+  substitute(T, X, N, M), term_to_atom(M, Ai, normal),
+  atom_list_concat([A, ' =α= ', Ai], Out).
 
 atom_reduce(' -β> ', b_reduce).
 atom_reduce(' -η> ', e_reduce).
@@ -73,10 +74,10 @@ x_reduction(e_reduce, A) --> [e, t, a, ' '|A].
 
 evaluate_equivalence(In, Out, Bs, Ns, Ns, Bs, I, I) :-
   equivalence(In, Mf, Nf),
-  get_assoc(Mf, Bs, (M, Mi)), get_assoc(Nf, Bs, (N, Ni)),
-  atom_term(Ma, M), atom_term(Na, N),
-  (eq(Mi, Ni) -> Eq = true; Eq = false),
-  atom_list_concat([Ma, ' =α= ', Na, ' ?\n', Eq], Out).
+  get_assoc(Mf, Bs, M), get_assoc(Nf, Bs, N),
+  term_to_atom(M, MA, normal), term_to_atom(N, NA, normal),
+  (eq(M, N) -> Eq = true; Eq = false),
+  atom_list_concat([MA, ' =α= ', NA, ' ?\n', Eq], Out).
 
 equivalence(A, M, N) :-
   atom_chars(A, CS), once(phrase(equivalence(Ms, Ns), CS)),
