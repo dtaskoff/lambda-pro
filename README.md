@@ -46,7 +46,7 @@ f2 = x. y. y
 ```
 It's possible to reference other terms by name:
 ```
-λ-προ: f0
+λ-προ: f0?
 f0 = x. x x
 (de Bruijn) λ 0 0
 λ-προ: f0 f0
@@ -56,10 +56,10 @@ f3 = f0 f0
 You can see a single step of β-reduction:
 ```
 λ-προ: beta f3
-f3 =α= (f0 f0) =α= ((x. x x) (x. x x))
- -β> ((x. x x) (x. x x))
-f4 = ((x. x x) (x. x x))
-(de Bruijn) ((λ 0 0) (λ 0 0))
+f3 =ρ= f0 f0 =ρ= (x. x x) (x. x x)
+ -β> (x. x x) (x. x x)
+f4 = (x. x x) (x. x x)
+(de Bruijn) (λ 0 0) (λ 0 0)
 ```
 Or a single step of η-reduction:
 ```
@@ -67,10 +67,10 @@ Or a single step of η-reduction:
 f5 = x. (y. y) x
 (de Bruijn) λ (λ 0) 0
 λ-προ: eta f5
-f5 =α= (x. (y. y) x)
- -η> (y. y)
-f6 = (y. y)
-(de Bruijn) (λ 0)
+f5 =ρ= x. (y. y) x
+ -η> y. y
+f6 = y. y
+(de Bruijn) λ 0
 ```
 Or check for α-equivalence of λ-terms:
 ```
@@ -89,6 +89,25 @@ true
 λ-προ: f8 == f9
 u. u v =α= u. v u ?
 false
+```
+You can also load a file with defined λ-terms (see [this one](./combinators.lpro) for example):
+```
+λ-προ: load combinators.lpro
+
+I = x. x
+(de Bruijn) λ 0
+K = x. y. x
+(de Bruijn) λ λ 1
+K* = x. y. y
+(de Bruijn) λ λ 0
+S = x. y. z. (x z) (y z)
+(de Bruijn) λ λ λ (2 0) (1 0)
+w = x. x x
+(de Bruijn) λ 0 0
+W = w w
+(de Bruijn) 4196 4196
+Y = f. (x. f (x x)) (x. f (x x))
+(de Bruijn) λ (λ 1 (0 0)) (λ 1 (0 0))
 ```
 
 #### swipl
