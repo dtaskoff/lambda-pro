@@ -36,6 +36,13 @@ test(evaluate_substitution,
     Mi = application(T, application(T, lambda(x, y-Ii))),
     eq(M, Mi).
 
+test(evaluate_substitutions,
+  forall(term(_, name, lambda, T))) :-
+    list_to_assoc([f0-T, f1-T, f2-T], Bs),
+    evaluate:evaluate_substitutions('f0 f1 f2', M, _, Bs, 42, _),
+    Mi = application(T, application(T, T)),
+    eq(M, Mi).
+
 test(x_reduction_beta) :-
   evaluate:x_reduction(b_reduce, 'beta f0 f0', 'f0 f0').
 test(x_reduction_eta) :-

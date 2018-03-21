@@ -45,22 +45,29 @@ show_terms(N, A, Ai, S) :-
 
 evaluate_reduction(In, Outi, Bs, Bsi, Ns, Nsi, I, Iii, Reduce) :-
   x_reduction(Reduce, In, A),
-  (evaluate_substitution(A, T, S, Bs, I, _) -> true;
+  (evaluate_substitutions(A, T, S, Bs, I, _) -> true;
     atom_to_term(A, T, normal, I, _), S = ''),
   call(Reduce, T, Ti),
   term_to_atom(Ti, Ai, normal),
   evaluate_(Ai, Out, Bs, Bsi, Ns, Nsi, I, Iii),
   atom_reduce(R, Reduce),
-  atom_list_concat([S, R, Ai, '\n', Out], Outi).
+  atom_list_concat([S, '\n', R, Ai, '\n', Out], Outi).
 
-% Substitutes the first free variable in the atom A
+% Substitute all free variables in an atom A
+% that are bound in the environment
+evaluate_substitutions(A, Mi, Out, Bs, I, Iii) :-
+  evaluate_substitution(A, M, Bs, I, Ii),
+  term_to_atom(M, Ai, normal),
+  (evaluate_substitutions(Ai, Mi, S, Bs, Ii, Iii) ->
+    atom_list_concat([A, ' =α= ', S], Out);
+    Mi = M, atom_list_concat([A, ' =α= ', Ai], Out)).
+
+% Substitute the first free variable in an atom A
 % that is bound in the environment
-evaluate_substitution(A, M, Out, Bs, I, Ii) :-
+evaluate_substitution(A, M, Bs, I, Ii) :-
   atom_to_term(A, T, normal, I, Ii),
   free_variables(T, V), memberchk(X-_, V),
-  get_assoc(X, Bs, N),
-  substitute(T, X, N, M), term_to_atom(M, Ai, normal),
-  atom_list_concat([A, ' =α= ', Ai], Out).
+  get_assoc(X, Bs, N), substitute(T, X, N, M).
 
 atom_reduce(' -β> ', b_reduce).
 atom_reduce(' -η> ', e_reduce).
