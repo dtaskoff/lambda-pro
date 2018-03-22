@@ -1,4 +1,4 @@
-:- module(evaluate, [evaluate_input/4]).
+:- module(evaluate, [evaluate_input/5]).
 
 
 :- use_module(terms,
@@ -12,14 +12,14 @@
 :- use_module(io, [read_file/2]).
 
 
-% evaluate_input(Input, Output, StateIn, StateOut), where
+% evaluate_input(Input, Output, StateIn, StateOut, Flags), where
 % State = (Bindings, Names, NextIndex)
-evaluate_input(In, Out, S, Si) :-
+evaluate_input(In, Out, S, Si, F) :-
   evaluate_quit(In, Out), Si = S;
   skip_comment(In, Out), Si = S;
   evaluate_numeral(In, Out, S, Si);
   evaluate_load(In, Out, S, Si);
-  evaluate_name_binding(In, Out, S, Si);
+  evaluate_name_binding(In, Out, S, Si, F);
   evaluate_reduction(In, Out, S, Si);
   evaluate_equivalence(In, Out, S, Si);
   evaluate_lambda(In, Out, S, Si);
@@ -42,7 +42,7 @@ evaluate_load(In, Out, S, Si) :- file_to_load(In, F), load_file(F, Out, S, Si).
 
 load_file(F, Out, S, Si) :- read_file(F, Lines),
   foldl([Line, (Outii, Sii), (Outiv, Siii)]>>
-    (evaluate_input(Line, Outiii, Sii, Siii),
+    (evaluate_input(Line, Outiii, Sii, Siii, [overwrite]),
       atom_list_concat([Outii, '\n', Outiii], Outiv)),
     Lines, ('', S), (Out, Si)).
 
@@ -54,13 +54,17 @@ file_to_load(F) --> [l, o, a, d, ' '|F].
 
 % Bind a term to a name. If the name is already used,
 % display an 'error' message
-evaluate_name_binding(In, Out, (Bs, Ns, I), Si) :-
+%
+% Note: names can be overwritten by adding 'overwrite' to Flags
+evaluate_name_binding(In, Out, (Bs, Ns, I), Si, F) :-
   name_binding(In, N, B),
-  (get_assoc(N, Bs, _) ->
+  (memberchk(overwrite, F) ->
+    (del_assoc(N, Bs, _, Bsi) -> true; Bsi = Bs); Bsi = Bs),
+  (get_assoc(N, Bsi, _) ->
     atom_list_concat(['`', N, '` is already bound'], Msg),
     Si = (Bs, Ns, I),
     evaluate_bad_input(Msg, Out);
-    evaluate_input(B, Out, (Bs, [N|Ns], I), Si)).
+    evaluate_input(B, Out, (Bsi, [N|Ns], I), Si, F)).
 
 name_binding(A, N, B) :-
   atom_chars(A, Cs), once(phrase(name_binding(Ns, Bs), Cs)),
