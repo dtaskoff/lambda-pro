@@ -18,8 +18,8 @@ test(e_reduce,
   not(e_reduce(T, _)).
 
 test(e_reduce) :- T =
-  lambda(X, application(lambda(Y, Y-I), X)),
-  Ti = lambda(Y, Y-I), e_reduce(T, Ti).
+  lambda(X, application(lambda(Y, Y-0), X)),
+  Ti = lambda(Y, Y-0), e_reduce(T, Ti).
 
 test(up) :- up(X-42, X-43, 1).
 test(up) :- up(X-43, X-42, -1).

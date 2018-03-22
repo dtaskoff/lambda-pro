@@ -7,26 +7,24 @@
 test(evaluate_bad_input,
   forall(member(X, [one, two, three]))) :-
     atom_concat('Bad input: ', X, O),
-    evaluate:evaluate_bad_input(X, O).
+    evaluate:evaluate_bad_input(X, O, S, S, F, F).
 
 test(evaluate_,
   forall((term(X, normal, atom, A),
-          term(X, normal, term, T),
-          term(X, de_bruijn, atom, Ai)))) :-
+          term(X, normal, term, T)))) :-
     empty_assoc(Bs),
     (X == 42 ->
       evaluate:evaluate_(A, Out, (Bs, [f0], 42), (Bsi, [], 41));
       evaluate:evaluate_(A, Out, (Bs, [f0], I), (Bsi, [],  I))),
-    evaluate:show_terms(f0, A, Ai, Out),
+    evaluate:show_term(f0, A, Out),
     put_assoc(f0, Bs, T, Bsi).
 
 test(evaluate_lambda,
   forall((term(X, name, atom, A),
-          term(X, name, lambda, T),
-          term(X, de_bruijn, atom, Ai)))) :-
+          term(X, name, lambda, T)))) :-
     list_to_assoc([f0-T], Bs), S = (Bs, _, _),
-    evaluate:evaluate_lambda(f0, Out, S, S),
-    evaluate:show_terms(f0, A, Ai, Out).
+    evaluate:evaluate_lambda(f0, Out, S, S, F, F),
+    evaluate:show_term(f0, A, Out).
 
 test(evaluate_substitution,
   forall(term(_, name, lambda, T))) :-
@@ -53,21 +51,17 @@ test(evaluate_beta_reduction) :-
   Ni = application(N, N),
   list_to_assoc([f0-N], Bs),
   evaluate:evaluate_reduction(
-    'beta f0 f0', Out, (Bs, [f1], 42), (Bsi, [], 42)),
+    'beta f0 f0', Out, (Bs, [f1], 42), (Bsi, [], 42), F, F),
   get_assoc(f1, Bsi, Nii), eq(Ni, Nii),
   W = '(x. x x) (x. x x)',
-  atom_to_term(W, TW, normal, 42, 42),
-  term_to_atom(TW, Wi, de_bruijn),
-  atom_list_concat(['f0 f0 =ρ= ', W, '\n -β> ', W, '\nf1 = ',
-    W, '\n(de Bruijn) ', Wi], Out).
+  atom_list_concat(['f0 f0\n =ρ= ', W, '\n -β> ', W, '\nf1 = ', W], Out).
 
 test(evaluate_eta_reduction) :-
   T = lambda(x, application(y-43, x-0)),
   list_to_assoc([f0-T], Bs),
   evaluate:evaluate_reduction(
-    'eta f0', Out, (Bs, [f1], 42), (Bsi, [], 41)),
+    'eta f0', Out, (Bs, [f1], 42), (Bsi, [], 41), F, F),
   get_assoc(f1, Bsi, Ti), eq(Ti, y-42),
-  atom_list_concat(['f0 =ρ= x. y x\n -η> y\nf1 = ',
-    'y', '\n(de Bruijn) 42'], Out).
+  atom_list_concat(['f0\n =ρ= x. y x\n -η> y\nf1 = y'], Out).
 
 :- end_tests(evaluate).
