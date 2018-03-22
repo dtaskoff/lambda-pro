@@ -40,12 +40,14 @@ evaluate_numeral(In, Out, S, S, F, F) :-
 % Load a file into the repl
 evaluate_load(In, Out, S, Si, F, Fi) :- file_to_load(In, N), load_file(N, Out, S, Si, F, Fi).
 
-load_file(N, Out, S, Si, F, Fii) :- read_file(N, Lines), Fi = [overwrite|F],
-  foldl([Line, (Outii, Sii, Fii), (Outiv, Siii, Fiv)]>>
-    (evaluate_input(Line, Outiii, Sii, Siii, Fi, Fiii),
-      atom_list_concat([Outii, '\n', Outiii], Outiv),
-      union(Fii, Fiii, Fiv)),
-    Lines, ('', S, Fi), (Out, Si, Fii)).
+load_file(N, Out, S, Si, F, Fii) :-
+  catch((read_file(N, Lines), Fi = [overwrite|F],
+    foldl([Line, (Outii, Sii, Fii), (Outiv, Siii, Fiv)]>>
+      (evaluate_input(Line, Outiii, Sii, Siii, Fi, Fiii),
+        atom_list_concat([Outii, '\n', Outiii], Outiv),
+        union(Fii, Fiii, Fiv)),
+      Lines, ('', S, Fi), (Out, Si, Fii))), _,
+    (atom_concat('No such file: ', N, Out), Si = S, Fii = F)).
 
 file_to_load(A, F) :-
   atom_chars(A, Cs), once(phrase(file_to_load(Fs), Cs)),
