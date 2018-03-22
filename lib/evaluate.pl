@@ -1,4 +1,4 @@
-:- module(evaluate, [evaluate_input/5]).
+:- module(evaluate, [evaluate_input/6]).
 
 
 :- use_module(terms,
@@ -12,39 +12,40 @@
 :- use_module(io, [read_file/2]).
 
 
-% evaluate_input(Input, Output, StateIn, StateOut, Flags), where
+% evaluate_input(Input, Output, StateIn, StateOut, FlagsIn, FlagsOut), where
 % State = (Bindings, Names, NextIndex)
-evaluate_input(In, Out, S, Si, F) :-
-  evaluate_quit(In, Out), Si = S;
-  skip_comment(In, Out), Si = S;
-  evaluate_numeral(In, Out, S, Si);
-  evaluate_load(In, Out, S, Si);
-  evaluate_name_binding(In, Out, S, Si, F);
-  evaluate_reduction(In, Out, S, Si);
-  evaluate_equivalence(In, Out, S, Si);
-  evaluate_lambda(In, Out, S, Si);
-  evaluate_bad_input(In, Out), Si = S.
+evaluate_input(In, Out, S, Si, F, Fi) :-
+  evaluate_quit(In, Out, S, Si, F, Fi);
+  skip_comment(In, Out, S, Si, F, Fi);
+  evaluate_numeral(In, Out, S, Si, F, Fi);
+  evaluate_load(In, Out, S, Si, F, Fi);
+  evaluate_name_binding(In, Out, S, Si, F, Fi);
+  evaluate_reduction(In, Out, S, Si, F, Fi);
+  evaluate_equivalence(In, Out, S, Si, F, Fi);
+  evaluate_lambda(In, Out, S, Si, F, Fi);
+  evaluate_bad_input(In, Out, S, Si, F, Fi).
 
 % Exit if the user has entered 'quit'
-evaluate_quit(quit, _) :- halt.
+evaluate_quit(quit, quit, S, S, F, F) :- halt.
 
 % Skip a line starting with '%'
-skip_comment(In, '') :- sub_atom(In, 0, 1, _, '%').
+skip_comment(In, In, S, S, F, F) :- sub_atom(In, 0, 1, _, '%').
 
 % Evaluate a Church numeral
-evaluate_numeral(In, Out, S, S) :-
+evaluate_numeral(In, Out, S, S, F, F) :-
   sub_atom(In, 0, 1, _, '#'), sub_atom(In, 1, _, 0, N),
   S = (Bs, _, _), get_assoc(N, Bs, T), numeral_to_atom(T, A),
   show_term(N, A, Out).
 
 % Load a file into the repl
-evaluate_load(In, Out, S, Si) :- file_to_load(In, F), load_file(F, Out, S, Si).
+evaluate_load(In, Out, S, Si, F, Fi) :- file_to_load(In, N), load_file(N, Out, S, Si, F, Fi).
 
-load_file(F, Out, S, Si) :- read_file(F, Lines),
-  foldl([Line, (Outii, Sii), (Outiv, Siii)]>>
-    (evaluate_input(Line, Outiii, Sii, Siii, [overwrite]),
-      atom_list_concat([Outii, '\n', Outiii], Outiv)),
-    Lines, ('', S), (Out, Si)).
+load_file(N, Out, S, Si, F, Fii) :- read_file(N, Lines), Fi = [overwrite|F],
+  foldl([Line, (Outii, Sii, Fii), (Outiv, Siii, Fiv)]>>
+    (evaluate_input(Line, Outiii, Sii, Siii, Fi, Fiii),
+      atom_list_concat([Outii, '\n', Outiii], Outiv),
+      union(Fii, Fiii, Fiv)),
+    Lines, ('', S, Fi), (Out, Si, Fii)).
 
 file_to_load(A, F) :-
   atom_chars(A, Cs), once(phrase(file_to_load(Fs), Cs)),
@@ -56,15 +57,15 @@ file_to_load(F) --> [l, o, a, d, ' '|F].
 % display an 'error' message
 %
 % Note: names can be overwritten by adding 'overwrite' to Flags
-evaluate_name_binding(In, Out, (Bs, Ns, I), Si, F) :-
+evaluate_name_binding(In, Out, (Bs, Ns, I), Si, F, F) :-
   name_binding(In, N, B),
   (memberchk(overwrite, F) ->
     (del_assoc(N, Bs, _, Bsi) -> true; Bsi = Bs); Bsi = Bs),
   (get_assoc(N, Bsi, _) ->
     atom_list_concat(['`', N, '` is already bound'], Msg),
     Si = (Bs, Ns, I),
-    evaluate_bad_input(Msg, Out);
-    evaluate_input(B, Out, (Bsi, [N|Ns], I), Si, F)).
+    evaluate_bad_input(Msg, Out, Si, Si, F, F);
+    evaluate_input(B, Out, (Bsi, [N|Ns], I), Si, F, F)).
 
 name_binding(A, N, B) :-
   atom_chars(A, Cs), once(phrase(name_binding(Ns, Bs), Cs)),
@@ -78,7 +79,7 @@ name_binding([], B) --> [' ', =, ' '|B].
 %
 % If A is x?, look if x is a name bound in the environment,
 % else add a new λ-term to the environment
-evaluate_lambda(In, Out, S, Si) :-
+evaluate_lambda(In, Out, S, Si, F, F) :-
   sub_atom(In, _, 1, 0, ?) -> Si = S,
     sub_atom(In, 0, _, 1, N),
     S = (Bs, _, _),
@@ -87,7 +88,7 @@ evaluate_lambda(In, Out, S, Si) :-
       term_to_atom(T, Ai, de_bruijn),
       show_terms(N, A, Ai, Out);
       atom_list_concat(['`', N, '` is not defined'], Msg),
-      evaluate_bad_input(Msg, Out));
+      evaluate_bad_input(Msg, Out, S, Si, F, F));
     evaluate_(In, Out, S, Si).
 
 % This is used to optimise the number of conversions
@@ -105,7 +106,7 @@ show_terms(N, A, Ai, S) :-
 % Show a λ-term without its indices
 show_term(N, A, S) :- atom_list_concat([N, ' = ', A], S).
 
-evaluate_reduction(In, Out, S, Si) :-
+evaluate_reduction(In, Out, S, Si, F, F) :-
   x_reduction(Reduce, In, A),
   S = (Bs, _, I),
   (evaluate_substitutions(A, T, Subs, Bs, I, _) -> true;
@@ -146,7 +147,7 @@ x_reduction(b_reducetr, A) --> [b, e, t, a, *, ' '|A].
 x_reduction(e_reduce, A) --> [e, t, a, ' '|A].
 x_reduction(e_reducetr, A) --> [e, t, a, *, ' '|A].
 
-evaluate_equivalence(In, Out, S, S) :-
+evaluate_equivalence(In, Out, S, S, F, F) :-
   equivalence(In, Mf, Nf),
   S = (Bs, _, I),
   get_assoc(Mf, Bs, M), get_assoc(Nf, Bs, N),
@@ -164,4 +165,4 @@ equivalence([C|Cs], N) --> [C], equivalence(Cs, N), { C \= ' ' }.
 equivalence([], N) --> [' ', =, =, ' '|N].
 
 % Dislay a message if the input isn't valid
-evaluate_bad_input(In, Out) :- atom_concat('Bad input: ', In, Out).
+evaluate_bad_input(In, Out, S, S, F, F) :- atom_concat('Bad input: ', In, Out).
