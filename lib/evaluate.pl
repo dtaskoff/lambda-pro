@@ -7,6 +7,7 @@
 :- use_module(reduction,
     [ b_reduce/2, b_reducetr/2
     , e_reduce/2, e_reducetr/2, substitute/4]).
+:- use_module(church_encoding, [numeral_to_atom/2]).
 :- use_module(utils, [atom_list_concat/2]).
 :- use_module(io, [read_file/2]).
 
@@ -15,6 +16,7 @@
 % State = (Bindings, Names, NextIndex)
 evaluate_input(In, Out, S, Si) :-
   evaluate_quit(In, Out), Si = S;
+  evaluate_numeral(In, Out, S, Si);
   evaluate_load(In, Out, S, Si);
   evaluate_name_binding(In, Out, S, Si);
   evaluate_reduction(In, Out, S, Si);
@@ -24,6 +26,12 @@ evaluate_input(In, Out, S, Si) :-
 
 % Exit if the user has entered 'quit'
 evaluate_quit(quit, _) :- halt.
+
+% Evaluate a Church numeral
+evaluate_numeral(In, Out, S, S) :-
+  sub_atom(In, 0, 1, _, '#'), sub_atom(In, 1, _, 0, N),
+  S = (Bs, _, _), get_assoc(N, Bs, T), numeral_to_atom(T, A),
+  term_to_atom(T, Ai, de_bruijn), show_terms(N, A, Ai, Out).
 
 % Load a file into the repl
 evaluate_load(In, Out, S, Si) :- file_to_load(In, F), load_file(F, Out, S, Si).
