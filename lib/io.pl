@@ -17,6 +17,5 @@ print_output(Out) :- writeln(Out).
 read_file(F, Out) :- open(F, read, Stream),
   read_string(Stream, Content, ''),
   close(Stream),
-  split_string(Content, '\n', '', Linesi),
-  convlist([Line, Line]>>(Line \= ""), Linesi, Lines),
-  maplist(atom_string, Out, Lines).
+  split_string(Content, '\n', '', Lines),
+  convlist([L, A]>>(L \= "", atom_string(A, L)), Lines, Out).

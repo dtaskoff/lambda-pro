@@ -43,12 +43,8 @@ evaluate_load(In, Out, S, Si, F, Fi) :- file_to_load(In, N), load_file(N, Out, S
 
 load_file(N, Out, S, Si, F, Fiii) :-
   catch((read_file(N, Lines), Fi = [overwrite|F],
-    foldl([Line, (Outii, Sii, Fii), (Outiv, Siii, Fiv)]>>
-      (evaluate_input(Line, Outiii, Sii, Siii, Fi, Fiii),
-        atom_list_concat([Outii, '\n', Outiii], Outiv),
-        union(Fii, Fiii, Fiv)),
-      Lines, ('', S, Fi), (Out, Si, Fii)),
-    Fiii = [file-N|Fii]), _,
+    fold_with_flags(Lines, evaluate_input, Out, S, Si, Fi, Fii),
+    subtract([file-N|Fii], [overwrite], Fiii)), _,
     (atom_concat('No such file: ', N, Out), Si = S, Fiii = F)).
 
 file_to_load(A, F) :-
@@ -58,13 +54,16 @@ file_to_load(A, F) :-
 file_to_load(F) --> [l, o, a, d, ' '|F].
 
 % Reload files that were loaded before
-evaluate_reload(reload, Out, S, Si, F, Fiv) :-
+evaluate_reload(reload, Out, S, Si, F, Fi) :-
   convlist([X, N]>>(X = file-N), F, Files),
-  foldl([File, (Outii, Sii, Fii), (Outiv, Siii, Fiii)]>>
-    (load_file(File, Outiii, Sii, Siii, F, Fi),
-      atom_list_concat([Outii, '\n', Outiii], Outiv),
-      union(Fi, Fii, Fiii)),
-  Files, ('', S, F), (Out, Si, Fiv)).
+  fold_with_flags(Files, load_file, Out, S, Si, F, Fi).
+
+% Abstract the folding over files and lines which collects flags
+fold_with_flags(Xs, Func, Out, S, Si, F, Fi) :-
+  foldl([X, (Outii, Sii, Fii), (Outiii, Siii, Fiv)]>>(
+    call(Func, X, Result, Sii, Siii, F, Fiii),
+    atom_list_concat([Outii, '\n', Result], Outiii),
+    union(Fii, Fiii, Fiv)), Xs, ('', S, F), (Out, Si, Fi)).
 
 % Bind a term to a name. If the name is already used,
 % display an 'error' message
