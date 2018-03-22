@@ -16,6 +16,7 @@
 % State = (Bindings, Names, NextIndex)
 evaluate_input(In, Out, S, Si) :-
   evaluate_quit(In, Out), Si = S;
+  skip_comment(In, Out), Si = S;
   evaluate_numeral(In, Out, S, Si);
   evaluate_load(In, Out, S, Si);
   evaluate_name_binding(In, Out, S, Si);
@@ -26,6 +27,9 @@ evaluate_input(In, Out, S, Si) :-
 
 % Exit if the user has entered 'quit'
 evaluate_quit(quit, _) :- halt.
+
+% Skip a line starting with '%'
+skip_comment(In, '') :- sub_atom(In, 0, 1, _, '%').
 
 % Evaluate a Church numeral
 evaluate_numeral(In, Out, S, S) :-
