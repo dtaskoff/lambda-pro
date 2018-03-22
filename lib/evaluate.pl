@@ -19,6 +19,7 @@ evaluate_input(In, Out, S, Si, F, Fi) :-
   skip_comment(In, Out, S, Si, F, Fi);
   evaluate_numeral(In, Out, S, Si, F, Fi);
   evaluate_load(In, Out, S, Si, F, Fi);
+  evaluate_reload(In, Out, S, Si, F, Fi);
   evaluate_name_binding(In, Out, S, Si, F, Fi);
   evaluate_reduction(In, Out, S, Si, F, Fi);
   evaluate_equivalence(In, Out, S, Si, F, Fi);
@@ -40,20 +41,30 @@ evaluate_numeral(In, Out, S, S, F, F) :-
 % Load a file into the repl
 evaluate_load(In, Out, S, Si, F, Fi) :- file_to_load(In, N), load_file(N, Out, S, Si, F, Fi).
 
-load_file(N, Out, S, Si, F, Fii) :-
+load_file(N, Out, S, Si, F, Fiii) :-
   catch((read_file(N, Lines), Fi = [overwrite|F],
     foldl([Line, (Outii, Sii, Fii), (Outiv, Siii, Fiv)]>>
       (evaluate_input(Line, Outiii, Sii, Siii, Fi, Fiii),
         atom_list_concat([Outii, '\n', Outiii], Outiv),
         union(Fii, Fiii, Fiv)),
-      Lines, ('', S, Fi), (Out, Si, Fii))), _,
-    (atom_concat('No such file: ', N, Out), Si = S, Fii = F)).
+      Lines, ('', S, Fi), (Out, Si, Fii)),
+    Fiii = [file-N|Fii]), _,
+    (atom_concat('No such file: ', N, Out), Si = S, Fiii = F)).
 
 file_to_load(A, F) :-
   atom_chars(A, Cs), once(phrase(file_to_load(Fs), Cs)),
   atom_list_concat(Fs, F).
 
 file_to_load(F) --> [l, o, a, d, ' '|F].
+
+% Reload files that were loaded before
+evaluate_reload(reload, Out, S, Si, F, Fiv) :-
+  convlist([X, N]>>(X = file-N), F, Files),
+  foldl([File, (Outii, Sii, Fii), (Outiv, Siii, Fiii)]>>
+    (load_file(File, Outiii, Sii, Siii, F, Fi),
+      atom_list_concat([Outii, '\n', Outiii], Outiv),
+      union(Fi, Fii, Fiii)),
+  Files, ('', S, F), (Out, Si, Fiv)).
 
 % Bind a term to a name. If the name is already used,
 % display an 'error' message
