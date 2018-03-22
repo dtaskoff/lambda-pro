@@ -35,7 +35,7 @@ skip_comment(In, '') :- sub_atom(In, 0, 1, _, '%').
 evaluate_numeral(In, Out, S, S) :-
   sub_atom(In, 0, 1, _, '#'), sub_atom(In, 1, _, 0, N),
   S = (Bs, _, _), get_assoc(N, Bs, T), numeral_to_atom(T, A),
-  term_to_atom(T, Ai, de_bruijn), show_terms(N, A, Ai, Out).
+  show_term(N, A, Out).
 
 % Load a file into the repl
 evaluate_load(In, Out, S, Si) :- file_to_load(In, F), load_file(F, Out, S, Si).
@@ -69,14 +69,13 @@ name_binding(A, N, B) :-
 name_binding([C|Cs], B) --> [C], name_binding(Cs, B), { C \= ' ' }.
 name_binding([], B) --> [' ', =, ' '|B].
 
-% Store and show a λ-term with its corresponding name and
+% Store and/or show a λ-term with its corresponding name and
 % version with de Bruijn indices
 %
 % If A is x?, look if x is a name bound in the environment,
 % else add a new λ-term to the environment
 evaluate_lambda(In, Out, S, Si) :-
-  sub_atom(In, _, 1, 0, End),
-  End == ? -> Si = S,
+  sub_atom(In, _, 1, 0, ?) -> Si = S,
     sub_atom(In, 0, _, 1, N),
     S = (Bs, _, _),
     (get_assoc(N, Bs, T) ->
@@ -92,13 +91,15 @@ evaluate_lambda(In, Out, S, Si) :-
 evaluate_(A, Out, (Bs, [N|Ns], I), (Bsi, Ns, Ii)) :-
   atom_to_term(A, T, normal, I, Ii),
   put_assoc(N, Bs, T, Bsi),
-  term_to_atom(T, Ai, de_bruijn),
-  show_terms(N, A, Ai, Out).
+  show_term(N, A, Out).
 
 % Show a λ-term with its corresponding name and
 % version with de Bruijn indices
 show_terms(N, A, Ai, S) :-
-  atom_list_concat([N, ' = ', A, '\n(de Bruijn) ', Ai], S).
+  show_term(N, A, Si), atom_list_concat([Si, '\n', Ai], S).
+
+% Show a λ-term without its indices
+show_term(N, A, S) :- atom_list_concat([N, ' = ', A], S).
 
 evaluate_reduction(In, Out, S, Si) :-
   x_reduction(Reduce, In, A),
