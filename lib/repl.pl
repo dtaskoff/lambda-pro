@@ -1,5 +1,7 @@
-:- use_module(lib/io, [set_prompt/0, read_input/1, print_output/1]).
-:- use_module(lib/evaluate, [evaluate_input/6]).
+:- module(repl, [repl/0]).
+
+:- use_module(io, [set_prompt/0, read_input/1, print_output/1]).
+:- use_module(evaluate, [evaluate_input/6]).
 
 
 % The maximum number of names that could be defined in the repl
@@ -20,7 +22,4 @@ repl(S, F) :- read_input(In),
   print_output(Out),
   repl(Si, Fi).
 
-repl :- empty_assoc(Bs), fs(Fs), max_index(I), repl((Bs, Fs, I), []).
-
-:- set_prompt.
-:- repl.
+repl :- set_prompt, empty_assoc(Bs), fs(Fs), max_index(I), repl((Bs, Fs, I), []).

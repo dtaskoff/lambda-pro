@@ -17,9 +17,10 @@ Install a version of [SWI-Prolog](http://www.swi-prolog.org/).
 
 
 ```bash
-$ ./test.sh # run the test suite
-$ ./repl.sh # start the λ-προ repl
-λ-προ: quit # exit the λ-προ repl
+$ make test    # run the test suite
+$ make         # build the λ-προ executable
+$ ./lambda-pro # start the λ-προ repl
+λ-προ: quit    % exit the λ-προ repl
 $
 ```
 
