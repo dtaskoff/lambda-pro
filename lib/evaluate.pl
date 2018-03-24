@@ -42,9 +42,9 @@ evaluate_numeral(In, Out, S, S, F, F) :-
 evaluate_load(In, Out, S, Si, F, Fi) :- file_to_load(In, N), load_file(N, Out, S, Si, F, Fi).
 
 load_file(N, Out, S, Si, F, Fiii) :-
-  catch((read_file(N, Lines), Fi = [overwrite|F],
+  catch((read_file(N, Lines), union([overwrite, file-N], F, Fi),
     fold_with_flags(Lines, evaluate_input, Out, S, Si, Fi, Fii),
-    subtract([file-N|Fii], [overwrite], Fiii)), _,
+    subtract(Fii, [overwrite], Fiii)), _,
     (atom_concat('No such file: ', N, Out), Si = S, Fiii = F)).
 
 file_to_load(A, F) :-
