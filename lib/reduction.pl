@@ -12,6 +12,7 @@
 substitute(M, X, N, Mi) :- substitute(M, X, N, 0, Mi).
 substitute(X-_, X, N, L, Mi) :- up(N, Mi, L), !.
 substitute(Y-J, X, _, _, Y-J) :- X \= Y.
+substitute(itr(M, I), X, N, L, itr(Mi, I)) :- substitute(M, X, N, L, Mi).
 substitute(app(M1, M2), X, N, L, app(M1i, M2i)) :-
   substitute(M1, X, N, L, M1i), substitute(M2, X, N, L, M2i).
 substitute(abs(X, M), X, _, _, abs(X, M)) :- !.
@@ -20,15 +21,17 @@ substitute(abs(Y, M), X, N, L, abs(Y, Mi)) :- X \= Y,
 
 % Increase (or decrease) all indices of free variables in M by K
 up(M, N, K) :- up(M, N, K, 0).
-up(X-I, X-Ii, K, L) :- I >= L, Ii is I + K, Ii >= L, !. % make sure we don't bind a variable
+up(X-I, X-Ii, K, L) :- I >= L, Ii is I + K, Ii >= L, !.
+% ^ make sure we don't bind a variable
 up(X-I, X-I, _, L) :- I < L.
-up(app(M, N), app(Mi, Ni), K, L) :-
-  up(M, Mi, K, L), up(N, Ni, K, L).
+up(itr(M, I), itr(N, I), K, L) :- up(M, N, K, L).
+up(app(M, N), app(Mi, Ni), K, L) :- up(M, Mi, K, L), up(N, Ni, K, L).
 up(abs(X, M), abs(X, Mi), K, L) :- Li is L + 1, up(M, Mi, K, Li).
 
 % What is a β-reduction?
 % (x. M) N >> M[x -> N]
 b_reduce(abs(X, M), abs(X, N)) :- b_reduce(M, N).
+b_reduce(itr(M, I), itr(N, I)) :- b_reduce(M, N).
 b_reduce(app(abs(X, M), N), Mii) :- up(N, Ni, 1),
   substitute(M, X, Ni, Mi), up(Mi, Mii, -1), !.
 b_reduce(app(M, N), app(Mi, N)) :- b_reduce(M, Mi), !.

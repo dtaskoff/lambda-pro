@@ -24,3 +24,7 @@ term(c0, _, term, abs(x, abs(y, y-0))).
 term(c1, normal, atom, 'x. y. x y').
 term(c1, de_bruijn, atom, 'λ λ 1 0').
 term(c1, normal, term, abs(x, abs(y, app(x-1, y-0)))).
+
+term(c5, normal, atom, 'x. y. x (x (x (x (x y))))').
+term(c5, de_bruijn, atom, 'λ λ 1 (1 (1 (1 (1 0))))').
+term(c5, normal, term, abs(x, abs(y, app(itr(x-1, 5), y-0)))).

@@ -11,6 +11,10 @@
 % Internally, both variable name and index of de Bruijn are stored:
 term(X-I) :- atom(X), number(I).
 term(app(M, N)) :- term(M), term(N).
+term(app(itr(M, I), N)) :- number(I), I > 0, term(M), term(N).
+% ^ an optimisation for iterated functions of this sort:
+% f (f (f (f (f x))))
+% Note that f could be a much more complicated λ-term
 term(abs(X, M)) :- atom(X), term(M).
 
 :- use_module(utils, [atom_list_concat/2]).
@@ -21,6 +25,9 @@ term(abs(X, M)) :- atom(X), term(M).
 term_to_atom(T, A, Ty) :- nonvar(T), nonvar(Ty), once(term_to_atom_(T, A, Ty)).
 term_to_atom_(X-_, X, normal).
 term_to_atom_(_-I, I, de_bruijn).
+term_to_atom_(app(itr(M, I), N), A, Ty) :- I > 1, J is I - 1,
+  term_to_atom(app(M, app(itr(M, J), N)), A, Ty).
+term_to_atom_(app(itr(M, 1), N), A, Ty) :- term_to_atom(app(M, N), A, Ty).
 term_to_atom_(app(M, app(N, P)), A, Ty) :-
   term_to_atom_(app(M, par(app(N, P))), A, Ty).
 term_to_atom_(app(abs(X, M), N), A, Ty) :-
@@ -44,6 +51,7 @@ atom_to_term(A, T, Ty, V, Vi) :- empty_assoc(B), atom_chars(A, As),
 unpar(par(T), Ti) :- unpar(T, Ti).
 unpar(abs(X, M), abs(X, Mi)) :- unpar(M, Mi).
 unpar(app(M, N), app(Mi, Ni)) :- unpar(M, Mi), unpar(N, Ni).
+unpar(itr(M, I), itr(N, I)) :- unpar(M, N).
 unpar(X-I, X-I).
 
 % A grammar for reading user-friendly λ-terms
@@ -59,10 +67,7 @@ lmd(abs(N, M), de_bruijn, (B, B, [N|Ns], Nsi, L)) --> ['λ', ' '],
   trm(M, de_bruijn, (Bi, _, Ns, Nsi, Li)).
 app(App, Ty, (B, Bii, V, Vii, L)) -->
   fnc(M, Ty, (B, Bi, V, Vi, L)), [' '], trm(N, Ty, (Bi, Bii, Vi, Vii, L)),
-  { push_app(M, N, App) }.
-% Reorder applications to match their left associativity
-push_app(M, app(N, P), app(Q, P)) :- push_app(M, N, Q), !.
-push_app(M, N, app(M, N)).
+  { reorder_app(M, N, RApp), itr_app(RApp, App) }.
 fnc(M, Ty, S) --> par(M, Ty, S) | lmd(M, Ty, S) | vrb(M, Ty, S).
 vrb(X-J, normal, (B, Bi, I, Ii, L)) --> nam(X),
   { get_assoc(X, B, K) -> J is K + L, Bi = B, Ii = I; J is I + L, Ii is I - 1, put_assoc(X, B, J, Bi) }.
@@ -75,18 +80,30 @@ idx(X) --> dgt(D), idx(Y), { atom_concat(D, Y, Xi), atom_number(Xi, X) }.
 idx(D) --> dgt(D).
 dgt(D) --> [C], { char_type(C, digit(D)) }.
 
+% Reorder applications to match their left associativity
+reorder_app(M, app(N, P), app(Q, P)) :- reorder_app(M, N, Q), !.
+reorder_app(M, N, app(M, N)).
+
+% Use the functor itr for iterated functions
+itr_app(app(M, par(app(itr(M, I), N))), app(itr(M, J), N)) :- !, J is I + 1.
+itr_app(app(M, par(app(M, N))), app(itr(M, 2), N)) :- !.
+itr_app(M, M).
+
 % The de Bruijn index of a variable
-index_of(X, X-I, I).
-index_of(X, app(M, N), I) :- once(index_of(X, M, I); index_of(X, N, I)).
-index_of(X, abs(Y, M), I) :- X \= Y, index_of(X, M, I), !.
+index_of(X, X-I, I) :- !.
+index_of(X, itr(M, _), I) :- !, index_of(X, M, I).
+index_of(X, app(M, N), I) :- !, once(index_of(X, M, I); index_of(X, N, I)).
+index_of(X, abs(Y, M), I) :- X \= Y, index_of(X, M, I).
 
 % α-equivalence for internally represented λ-terms
 eq(_-I, _-I) :- !, number(I).
+eq(itr(M, I), itr(Mi, J)) :- !, I == J, eq(M, Mi).
 eq(app(M, N), app(Mi, Ni)) :- !, eq(M, Mi), eq(N, Ni).
 eq(abs(_, M), abs(_, N)) :- eq(M, N).
 
 % The free variables of an internally represented λ-term
 free_variables(X-I, [X-I]).
+free_variables(itr(M, _), FV) :- free_variables(M, FV).
 free_variables(app(M, N), FV) :-
   free_variables(M, FVM), free_variables(N, FVN), union(FVM, FVN, FV).
 free_variables(abs(X, M), FV) :-
