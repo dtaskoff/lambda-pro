@@ -30,7 +30,7 @@ evaluate_input(In, Out, S, Si, F, Fi) :-
 evaluate_quit(quit, quit, S, S, F, F) :- halt.
 
 % Skip a line starting with '%'
-skip_comment(In, In, S, S, F, F) :- sub_atom(In, 0, 1, _, '%').
+skip_comment(In, '', S, S, F, F) :- sub_atom(In, 0, 1, _, '%').
 
 % Evaluate a Church numeral
 evaluate_numeral(In, Out, S, S, F, F) :-
