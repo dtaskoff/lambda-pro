@@ -33,10 +33,8 @@ up(parens(M), parens(Mi), K, L) :- up(M, Mi, K, L).
 % What is a β-reduction?
 % (x. M) N >> M[x -> N]
 b_reduce(abs(X, M), abs(X, N)) :- b_reduce(M, N).
-b_reduce(app(parens(M), N), Mi) :-
-  b_reduce(app(M, N), Mi), !.
-b_reduce(app(M, parens(N)), parens(Mi)) :-
-  b_reduce(app(M, N), Mi), !.
+b_reduce(app(parens(M), N), Mi) :- !, b_reduce(app(M, N), Mi).
+b_reduce(app(M, parens(N)), parens(Mi)) :- !, b_reduce(app(M, N), Mi).
 b_reduce(app(abs(X, M), N), Mii) :- up(N, Ni, 1),
   substitute(M, X, Ni, Mi), up(Mi, Mii, -1), !.
 b_reduce(app(M, N), app(Mi, N)) :- b_reduce(M, Mi), !.
