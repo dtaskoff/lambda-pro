@@ -83,7 +83,7 @@ name_binding(A, N, B) :-
   atom_chars(A, Cs), once(phrase(name_binding(Ns, Bs), Cs)),
   atom_list_concat(Ns, N), atom_list_concat(Bs, B).
 
-name_binding([C|Cs], B) --> [C], name_binding(Cs, B), { C \= ' ' }.
+name_binding([C|Cs], B) --> [C], { C \= ' '}, name_binding(Cs, B).
 name_binding([], B) --> [' ', =, ' '|B].
 
 % Store and/or show a λ-term with its corresponding name and
@@ -173,7 +173,7 @@ equivalence(A, M, N) :-
   atom_chars(A, CS), once(phrase(equivalence(Ms, Ns), CS)),
   atom_list_concat(Ms, M), atom_list_concat(Ns, N).
 
-equivalence([C|Cs], N) --> [C], equivalence(Cs, N), { C \= ' ' }.
+equivalence([C|Cs], N) --> [C], { C \= ' ' }, equivalence(Cs, N).
 equivalence([], N) --> [' ', =, =, ' '|N].
 
 % Dislay a message if the input isn't valid
