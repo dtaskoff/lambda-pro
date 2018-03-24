@@ -81,6 +81,9 @@ idx(D) --> dgt(D).
 dgt(D) --> [C], { char_type(C, digit(D)) }.
 
 % Reorder applications to match their left associativity
+reorder_app(M, app(itr(N, I), P), app(R, (app(Q, P)))) :- !,
+  (I == 2 -> Q = N; I > 2 -> J is I - 1, Q = itr(N, J)),
+  reorder_app(M, N, R).
 reorder_app(M, app(N, P), app(Q, P)) :- reorder_app(M, N, Q), !.
 reorder_app(M, N, app(M, N)).
 
