@@ -16,6 +16,7 @@
 % State = (Bindings, Names, NextIndex)
 evaluate_input(In, Out, S, Si, F, Fi) :-
   evaluate_quit(In, Out, S, Si, F, Fi);
+  evaluate_env(In, Out, S, Si, F, Fi);
   skip_comment(In, Out, S, Si, F, Fi);
   evaluate_numeral(In, Out, S, Si, F, Fi);
   evaluate_load(In, Out, S, Si, F, Fi);
@@ -28,6 +29,14 @@ evaluate_input(In, Out, S, Si, F, Fi) :-
 
 % Exit if the user has entered 'quit'
 evaluate_quit(quit, quit, S, S, F, F) :- halt.
+
+% Show the names in the current environment
+evaluate_env(env, Out, S, S, F, F) :-
+  S = (Bs, _, _), assoc_to_list(Bs, L),
+  foldl([N-T, Outi, Outii]>>(
+    term_to_atom(T, A, normal), show_term(N, A, Out),
+    atom_list_concat([Outi, '\n', Out], Outii)
+    ), L, 'Names: ', Out).
 
 % Skip a line starting with '%'
 skip_comment(In, '', S, S, F, F) :- sub_atom(In, 0, 1, _, '%').

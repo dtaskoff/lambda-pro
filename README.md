@@ -42,6 +42,13 @@ f1 = x. y. x
 λ-προ: x. y. y
 f2 = x. y. y
 ```
+Showing the names in the current environment is done like that:
+```
+λ-προ: env
+f0 = x. x x
+f1 = x. y. x
+f2 = x. y. y
+```
 It's possible to show de Bruijn indices of a λ-term:
 ```
 λ-προ: f0?
