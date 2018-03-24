@@ -39,13 +39,14 @@ evaluate_numeral(In, Out, S, S, F, F) :-
   show_term(N, A, Out).
 
 % Load a file into the repl
-evaluate_load(In, Out, S, Si, F, Fi) :- file_to_load(In, N), load_file(N, Out, S, Si, F, Fi).
+evaluate_load(In, Out, S, Si, F, Fi) :-
+  file_to_load(In, N), load_file(N, Out, S, Si, F, Fi).
 
 load_file(N, Out, S, Si, F, Fiii) :-
   catch((read_file(N, Lines), union([overwrite, file-N], F, Fi),
-    fold_with_flags(Lines, evaluate_input, Out, S, Si, Fi, Fii),
-    subtract(Fii, [overwrite], Fiii)), _,
-    (atom_concat('No such file: ', N, Out), Si = S, Fiii = F)).
+    fold_with_flags(Lines, evaluate_input, _, S, Si, Fi, Fii),
+    subtract(Fii, [overwrite], Fiii), Out = ''), _,
+    (atom_concat('Can\'t load file: ', N, Out), Si = S, Fiii = F)).
 
 file_to_load(A, F) :-
   atom_chars(A, Cs), once(phrase(file_to_load(Fs), Cs)),
@@ -121,27 +122,23 @@ show_term(N, A, S) :- atom_list_concat([N, ' = ', A], S).
 evaluate_reduction(In, Out, S, Si, F, F) :-
   x_reduction(Reduce, In, A),
   S = (Bs, _, I),
-  (evaluate_substitutions(A, T, Subs, Bs, I, _) -> true;
-    atom_to_term(A, T, normal, I, _), Subs = ''),
-  call(Reduce, T, Ti),
+  atom_to_term(A, T, normal, I, _),
+  (evaluate_substitutions(T, M, Bs) -> true; M = T),
+  call(Reduce, M, Ti),
   term_to_atom(Ti, Ai, normal),
   evaluate_(Ai, Outi, S, Si),
   atom_reduce(R, Reduce),
-  atom_list_concat([Subs, '\n', R, Ai, '\n', Outi], Out).
+  atom_list_concat([R, '\n', Outi], Out).
 
 % Substitute all free variables in an atom A
 % that are bound in the environment
-evaluate_substitutions(A, Mi, Out, Bs, I, Iii) :-
-  evaluate_substitution(A, M, Bs, I, Ii),
-  term_to_atom(M, Ai, normal),
-  (evaluate_substitutions(Ai, Mi, S, Bs, Ii, Iii) ->
-    atom_list_concat([A, '\n =ρ= ', S], Out);
-    Mi = M, atom_list_concat([A, '\n =ρ= ', Ai], Out)).
+evaluate_substitutions(T, Ti, Bs) :-
+  evaluate_substitution(T, M, Bs),
+  (evaluate_substitutions(M, Ti, Bs) -> true; Ti = M).
 
 % Substitute the first free variable in an atom A
 % that is bound in the environment
-evaluate_substitution(A, M, Bs, I, Ii) :-
-  atom_to_term(A, T, normal, I, Ii),
+evaluate_substitution(T, M, Bs) :-
   free_variables(T, V), memberchk(X-_, V),
   get_assoc(X, Bs, N), substitute(T, X, N, M).
 

@@ -54,7 +54,7 @@ test(evaluate_beta_reduction) :-
     'beta f0 f0', Out, (Bs, [f1], 42), (Bsi, [], 42), F, F),
   get_assoc(f1, Bsi, Nii), eq(Ni, Nii),
   W = '(x. x x) (x. x x)',
-  atom_list_concat(['f0 f0\n =ρ= ', W, '\n -β> ', W, '\nf1 = ', W], Out).
+  atom_list_concat([' -β> \nf1 = ', W], Out).
 
 test(evaluate_eta_reduction) :-
   T = abs(x, app(y-43, x-0)),
@@ -62,6 +62,6 @@ test(evaluate_eta_reduction) :-
   evaluate:evaluate_reduction(
     'eta f0', Out, (Bs, [f1], 42), (Bsi, [], 41), F, F),
   get_assoc(f1, Bsi, Ti), eq(Ti, y-42),
-  atom_list_concat(['f0\n =ρ= x. y x\n -η> y\nf1 = y'], Out).
+  atom_list_concat([' -η> \nf1 = y'], Out).
 
 :- end_tests(evaluate).

@@ -11,6 +11,7 @@ read_input(In) :- read_string(user_input, String, "\n"),
 read_string(Stream, String, Sep) :- read_string(Stream, Sep, "\t", _, String).
 
 % Otherwise it'd be rewl
+print_output('') :- !.
 print_output(Out) :- writeln(Out).
 
 % Read the contents of a file
