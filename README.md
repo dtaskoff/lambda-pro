@@ -56,20 +56,15 @@ f3 = f0 f0
 You can see a single step of β-reduction:
 ```
 λ-προ: beta f3
-f3
- =ρ= f0 f0
- =ρ= (x. x x) (x. x x)
- -β> (x. x x) (x. x x)
-f4 = (x. x x) (x. x x)
+ -β> 
+f4 = (x. x x) x. x x
 ```
 Or a single step of η-reduction:
 ```
 λ-προ: x. y. x y
 f5 = x. y. x y
 λ-προ: eta f5
-f5
- =ρ= x. y. x y
- -η> x. x
+ -η> 
 f6 = x. x
 ```
 Or check for α-equivalence of λ-terms:
@@ -89,32 +84,23 @@ false
 ```
 There are also transitive and reflexive closures for the reductions:
 ```
-λ-προ: c5 = f. x. f (f (f x)) 
-c5 = f. x. f (f (f x))
+λ-προ: c3 = f. x. f (f (f x)) 
+c3 = f. x. f (f (f x))
 λ-προ: beta* c3 succ zero
-c3 succ zero
- =ρ= (f. x. f (f (f x))) succ zero
- -β>> succ (succ (succ zero))
+ -β>> 
 f10 = succ (succ (succ zero))
 λ-προ: x. y. z. x y z
 f11 = x. y. z. x y z
 λ-προ: eta* f11
-f11
- =ρ= x. y. z. x y z
- -η>> x. x
+ -η>> 
 f12 = x. x
 ```
 You can also load a file with defined λ-terms (see [this one](./combinators.lpro) for example):
 ```
 λ-προ: load combinators.lpro
-
-I = x. x
-K = x. y. x
+λ-προ: K*?
 K* = x. y. y
-S = x. y. z. (x z) (y z)
-w = x. x x
-W = w w
-Y = f. (x. f (x x)) (x. f (x x))
+λ λ 0
 ```
 
 #### swipl
