@@ -23,7 +23,7 @@ evaluate_input(In, Out, S, Si, F, Fi) :-
   evaluate_name_binding(In, Out, S, Si, F, Fi);
   evaluate_reduction(In, Out, S, Si, F, Fi);
   evaluate_equivalence(In, Out, S, Si, F, Fi);
-  evaluate_lambda(In, Out, S, Si, F, Fi);
+  evaluate_term(In, Out, S, Si, F, Fi);
   evaluate_bad_input(In, Out, S, Si, F, Fi).
 
 % Exit if the user has entered 'quit'
@@ -91,7 +91,7 @@ name_binding([], B) --> [' ', =, ' '|B].
 %
 % If A is x?, look if x is a name bound in the environment,
 % else add a new λ-term to the environment
-evaluate_lambda(In, Out, S, Si, F, F) :-
+evaluate_term(In, Out, S, Si, F, F) :-
   sub_atom(In, _, 1, 0, ?) -> Si = S,
     sub_atom(In, 0, _, 1, N),
     S = (Bs, _, _),

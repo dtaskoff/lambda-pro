@@ -6,6 +6,6 @@
 
 
 numeral_to_atom(N, A) :-
-  b_reducetr(application(application(N, succ-1), zero-0), T),
+  b_reducetr(app(app(N, succ-1), zero-0), T),
   list_to_assoc([succ-[X, SX]>>(SX is X + 1), zero-0], Ms),
   once(interpret(T, Ms, A)).

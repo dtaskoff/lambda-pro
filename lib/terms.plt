@@ -15,7 +15,7 @@ test(atom_to_term,
   (Ty = normal -> V = 42; V = [x, y, z]),
   atom_to_term(A, T, Ty, V, _).
 
-test(index_of) :- index_of(y, lambda(x, application(y-43, x-0)), 43).
+test(index_of) :- index_of(y, abs(x, app(y-43, x-0)), 43).
 
 test(free_variables) :- atom_to_term('(z. x. y) (y. z. x)', T, normal, 42, _), free_variables(T, [y-_, x-_]).
 test(free_variables) :- atom_to_term('(λ λ 44) (λ λ 43)', T, de_bruijn, [x, y, z, u, v, w], _), free_variables(T, [_-44, _-43]).

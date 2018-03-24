@@ -18,51 +18,51 @@ test(e_reduce,
   not(e_reduce(T, _)).
 
 test(e_reduce) :- T =
-  lambda(X, application(lambda(Y, Y-0), X)),
-  Ti = lambda(Y, Y-0), e_reduce(T, Ti).
+  abs(X, app(abs(Y, Y-0), X)),
+  Ti = abs(Y, Y-0), e_reduce(T, Ti).
 
 test(up) :- up(X-42, X-43, 1).
 test(up) :- up(X-43, X-42, -1).
-test(up) :- up(lambda(X, lambda(Y, lambda(Z, Z-2))),
-  lambda(X, lambda(Y, lambda(Z, X-2))), _).
-test(up) :- up(lambda(X, lambda(Y, lambda(U, V-3))), lambda(X, lambda(Y, lambda(U, V-4))), 1).
+test(up) :- up(abs(X, abs(Y, abs(Z, Z-2))),
+  abs(X, abs(Y, abs(Z, X-2))), _).
+test(up) :- up(abs(X, abs(Y, abs(U, V-3))), abs(X, abs(Y, abs(U, V-4))), 1).
 
 test(substitute) :- substitute(x-42, y, _, x-42).
 
-test(substitute) :- M = application(x-42, y-41),
-  N = lambda(y, z-41), substitute(M, x, N, Ti),
-  Ti = application(parentheses(lambda(y, z-41)), y-41).
+test(substitute) :- M = app(x-42, y-41),
+  N = abs(y, z-41), substitute(M, x, N, Ti),
+  Ti = app(parens(abs(y, z-41)), y-41).
 
 test(substitute) :-
-  substitute(lambda(x, x-0), x, lambda(x, y-42), lambda(x, x-0)).
+  substitute(abs(x, x-0), x, abs(x, y-42), abs(x, x-0)).
 test(substitute) :-
-  M = lambda(x, y-1), N = lambda(u, v-42),
-  substitute(M, y, N, lambda(x, parentheses(lambda(u, v-43)))).
+  M = abs(x, y-1), N = abs(u, v-42),
+  substitute(M, y, N, abs(x, parens(abs(u, v-43)))).
 
 test(substitute) :-
-  substitute(lambda(x, x-0), y, lambda(u, v-42), lambda(x, x-0)).
+  substitute(abs(x, x-0), y, abs(u, v-42), abs(x, x-0)).
 test(substitute) :-
-  M = lambda(x, application(y-2, x-0)),
-  N = application(z-2, lambda(u, lambda(v, application(application(v-0, u-1), w-2)))),
+  M = abs(x, app(y-2, x-0)),
+  N = app(z-2, abs(u, abs(v, app(app(v-0, u-1), w-2)))),
   substitute(M, y, N, T),
-  T = lambda(x, application(parentheses(application(z-3, lambda(u, lambda(v, application(application(v-0, u-1), w-3))))), x-0)).
+  T = abs(x, app(parens(app(z-3, abs(u, abs(v, app(app(v-0, u-1), w-3))))), x-0)).
 
 test(b_reduce,
   forall(term(_, de_bruijn, lambda, T))) :-
   not(b_reduce(T, _)).
 
 test(b_reduce) :-
-  M = application(lambda(x, x-0), y-42),
-  b_reduce(M, parentheses(y-42)).
+  M = app(abs(x, x-0), y-42),
+  b_reduce(M, parens(y-42)).
 test(b_reduce) :-
-  M = application(lambda(x, y-2), z-42), b_reduce(M, y-1).
+  M = app(abs(x, y-2), z-42), b_reduce(M, y-1).
 test(b_reduce) :-
-  M = application(lambda(x, lambda(y, application(z-42, x-1))),
-    lambda(x, application(x-0, u-1))),
-  N = lambda(y, application(z-41, parentheses(lambda(x, application(x-0, u-2))))),
+  M = app(abs(x, abs(y, app(z-42, x-1))),
+    abs(x, app(x-0, u-1))),
+  N = abs(y, app(z-41, parens(abs(x, app(x-0, u-2))))),
   b_reduce(M, N).
-test(b_reduce) :- M = lambda(x, application(x-0, x-0)),
-  N = application(M, M),
-  b_reduce(N, application(parentheses(M), parentheses(M))).
+test(b_reduce) :- M = abs(x, app(x-0, x-0)),
+  N = app(M, M),
+  b_reduce(N, app(parens(M), parens(M))).
 
 :- end_tests(reduction).

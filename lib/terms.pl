@@ -10,33 +10,33 @@
 %
 % Internally, both variable name and index of de Bruijn are stored:
 term(X-I) :- atom(X), number(I).
-term(application(M, N)) :- term(M), term(N).
-term(lambda(X, M)) :- atom(X), term(M).
-term(parentheses(T)) :- term(T).
+term(app(M, N)) :- term(M), term(N).
+term(abs(X, M)) :- atom(X), term(M).
+term(parens(T)) :- term(T).
 
 :- use_module(utils, [atom_list_concat/2]).
 
 % Convert between user-friendly λ-terms and internally represented λ-terms
 % term_to_atom(Term, Atom, Type), where
 % Type ::= normal | de_bruijn
-term_to_atom(parentheses(T), A, Ty) :- term_to_atom(T, A, Ty), !.
+term_to_atom(parens(T), A, Ty) :- term_to_atom(T, A, Ty), !.
 term_to_atom(T, A, Ty) :- nonvar(T), nonvar(Ty), once(term_to_atom_(T, A, Ty)).
 term_to_atom_(X-_, X, normal).
 term_to_atom_(_-I, I, de_bruijn).
-term_to_atom_(parentheses(X-_), X, normal).
-term_to_atom_(parentheses(_-I), I, de_bruijn).
-term_to_atom_(application(M, application(N, P)), A, Ty) :-
-  term_to_atom_(application(M, parentheses(application(N, P))), A, Ty).
-term_to_atom_(application(lambda(X, M), N), A, Ty) :-
-  term_to_atom_(application(parentheses(lambda(X, M)), N), A, Ty).
-term_to_atom_(application(M, N), A, Ty) :- term_to_atom_(M, MA, Ty), term_to_atom_(N, NA, Ty),
+term_to_atom_(parens(X-_), X, normal).
+term_to_atom_(parens(_-I), I, de_bruijn).
+term_to_atom_(app(M, app(N, P)), A, Ty) :-
+  term_to_atom_(app(M, parens(app(N, P))), A, Ty).
+term_to_atom_(app(abs(X, M), N), A, Ty) :-
+  term_to_atom_(app(parens(abs(X, M)), N), A, Ty).
+term_to_atom_(app(M, N), A, Ty) :- term_to_atom_(M, MA, Ty), term_to_atom_(N, NA, Ty),
   atom_list_concat([MA, ' ', NA], A).
-term_to_atom_(lambda(X, M), A, normal) :- term_to_atom_(M, MA, normal),
+term_to_atom_(abs(X, M), A, normal) :- term_to_atom_(M, MA, normal),
   atom_list_concat([X, '. ', MA], A).
-term_to_atom_(lambda(_, M), A, de_bruijn) :- term_to_atom_(M, MA, de_bruijn),
+term_to_atom_(abs(_, M), A, de_bruijn) :- term_to_atom_(M, MA, de_bruijn),
   atom_list_concat(['λ ', MA], A).
-term_to_atom_(parentheses(parentheses(T)), A, Ty) :- term_to_atom_(parentheses(T), A, Ty).
-term_to_atom_(parentheses(T), A, Ty) :- term_to_atom_(T, TA, Ty), atom_list_concat(['(', TA, ')'], A).
+term_to_atom_(parens(parens(T)), A, Ty) :- term_to_atom_(parens(T), A, Ty).
+term_to_atom_(parens(T), A, Ty) :- term_to_atom_(T, TA, Ty), atom_list_concat(['(', TA, ')'], A).
 
 % This one has more arguments, because it has to fill the missing variables' names or indices
 % atom_to_term(Atom, Term, Type, VariablesIn, VariablesOut), where
@@ -47,19 +47,19 @@ atom_to_term(A, T, Ty, V, Vi) :- empty_assoc(B), atom_chars(A, As), once(phrase(
 % term(Term, Type, State), where
 % State ::= (BoundNamesIn, BoundNamesOut, VariablesIn, VariablesOut, LambdasPassed)
 trm(T, Ty, S) --> par(T, Ty, S) | lmd(T, Ty, S) | app(T, Ty, S) | vrb(T, Ty, S).
-par(parentheses(T), Ty, S) --> ['('], trm(T, Ty, S), [')'].
-lmd(lambda(X, M), normal, (B, B, I, Ii, L)) --> nam(X),
+par(parens(T), Ty, S) --> ['('], trm(T, Ty, S), [')'].
+lmd(abs(X, M), normal, (B, B, I, Ii, L)) --> nam(X),
   { J is -1 - L, Li is L + 1, put_assoc(X, B, J, Bi) },
   ['.', ' '], trm(M, normal, (Bi, _, I, Ii, Li)).
-lmd(lambda(N, M), de_bruijn, (B, B, [N|Ns], Nsi, L)) --> ['λ', ' '],
+lmd(abs(N, M), de_bruijn, (B, B, [N|Ns], Nsi, L)) --> ['λ', ' '],
   { J is -L, Li is L + 1, put_assoc(J, B, N, Bi) },
   trm(M, de_bruijn, (Bi, _, Ns, Nsi, Li)).
 app(App, Ty, (B, Bii, V, Vii, L)) -->
   fnc(M, Ty, (B, Bi, V, Vi, L)), [' '], trm(N, Ty, (Bi, Bii, Vi, Vii, L)),
   { push_app(M, N, App) }.
 % Reorder applications to match their left associativity
-push_app(M, application(N, P), application(Q, P)) :- push_app(M, N, Q), !.
-push_app(M, N, application(M, N)).
+push_app(M, app(N, P), app(Q, P)) :- push_app(M, N, Q), !.
+push_app(M, N, app(M, N)).
 fnc(M, Ty, S) --> par(M, Ty, S) | lmd(M, Ty, S) | vrb(M, Ty, S).
 vrb(X-J, normal, (B, Bi, I, Ii, L)) --> nam(X),
   { get_assoc(X, B, K) -> J is K + L, Bi = B, Ii = I; J is I + L, Ii is I - 1, put_assoc(X, B, J, Bi) }.
@@ -74,21 +74,21 @@ dgt(D) --> [C], { char_type(C, digit(D)) }.
 
 % The de Bruijn index of a variable
 index_of(X, X-I, I).
-index_of(X, application(M, N), I) :- once(index_of(X, M, I); index_of(X, N, I)).
-index_of(X, lambda(Y, M), I) :- X \= Y, index_of(X, M, I), !.
-index_of(X, parentheses(M), I) :- index_of(X, M, I).
+index_of(X, app(M, N), I) :- once(index_of(X, M, I); index_of(X, N, I)).
+index_of(X, abs(Y, M), I) :- X \= Y, index_of(X, M, I), !.
+index_of(X, parens(M), I) :- index_of(X, M, I).
 
 % α-equivalence for internally represented λ-terms
 eq(_-I, _-I) :- number(I), !.
-eq(application(M, N), application(Mi, Ni)) :- eq(M, Mi), eq(N, Ni), !.
-eq(lambda(_, M), lambda(_, N)) :- eq(M, N), !.
-eq(parentheses(M), N) :- eq(M, N), !.
-eq(M, parentheses(N)) :- eq(M, N).
+eq(app(M, N), app(Mi, Ni)) :- eq(M, Mi), eq(N, Ni), !.
+eq(abs(_, M), abs(_, N)) :- eq(M, N), !.
+eq(parens(M), N) :- eq(M, N), !.
+eq(M, parens(N)) :- eq(M, N).
 
 % The free variables of an internally represented λ-term
 free_variables(X-I, [X-I]).
-free_variables(application(M, N), FV) :-
+free_variables(app(M, N), FV) :-
   free_variables(M, FVM), free_variables(N, FVN), union(FVM, FVN, FV).
-free_variables(lambda(X, M), FV) :-
+free_variables(abs(X, M), FV) :-
   free_variables(M, FVM), subtract(FVM, [X-_], FV).
-free_variables(parentheses(T), FV) :- free_variables(T, FV).
+free_variables(parens(T), FV) :- free_variables(T, FV).
