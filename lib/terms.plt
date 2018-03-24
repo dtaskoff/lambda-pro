@@ -1,5 +1,8 @@
 :- begin_tests(terms).
-:- use_module(terms, [term/1, term_to_atom/3, atom_to_term/5, index_of/3, free_variables/2]).
+:- use_module(terms,
+  [ term/1, term_to_atom/3, atom_to_term/5
+  , index_of/3, free_variables/2
+  ]).
 :- use_module(test_terms).
 
 test(term, forall(term(_, _, lambda, T))) :- term(T).

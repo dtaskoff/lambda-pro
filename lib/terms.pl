@@ -12,42 +12,45 @@
 term(X-I) :- atom(X), number(I).
 term(app(M, N)) :- term(M), term(N).
 term(abs(X, M)) :- atom(X), term(M).
-term(parens(T)) :- term(T).
 
 :- use_module(utils, [atom_list_concat/2]).
 
 % Convert between user-friendly λ-terms and internally represented λ-terms
 % term_to_atom(Term, Atom, Type), where
 % Type ::= normal | de_bruijn
-term_to_atom(parens(T), A, Ty) :- term_to_atom(T, A, Ty), !.
 term_to_atom(T, A, Ty) :- nonvar(T), nonvar(Ty), once(term_to_atom_(T, A, Ty)).
 term_to_atom_(X-_, X, normal).
 term_to_atom_(_-I, I, de_bruijn).
-term_to_atom_(parens(X-_), X, normal).
-term_to_atom_(parens(_-I), I, de_bruijn).
 term_to_atom_(app(M, app(N, P)), A, Ty) :-
-  term_to_atom_(app(M, parens(app(N, P))), A, Ty).
+  term_to_atom_(app(M, par(app(N, P))), A, Ty).
 term_to_atom_(app(abs(X, M), N), A, Ty) :-
-  term_to_atom_(app(parens(abs(X, M)), N), A, Ty).
-term_to_atom_(app(M, N), A, Ty) :- term_to_atom_(M, MA, Ty), term_to_atom_(N, NA, Ty),
+  term_to_atom_(app(par(abs(X, M)), N), A, Ty).
+term_to_atom_(par(T), A, Ty) :-
+  term_to_atom_(T, TA, Ty), atom_list_concat(['(', TA, ')'], A).
+term_to_atom_(app(M, N), A, Ty) :-
+  term_to_atom_(M, MA, Ty), term_to_atom_(N, NA, Ty),
   atom_list_concat([MA, ' ', NA], A).
-term_to_atom_(abs(X, M), A, normal) :- term_to_atom_(M, MA, normal),
-  atom_list_concat([X, '. ', MA], A).
-term_to_atom_(abs(_, M), A, de_bruijn) :- term_to_atom_(M, MA, de_bruijn),
-  atom_list_concat(['λ ', MA], A).
-term_to_atom_(parens(parens(T)), A, Ty) :- term_to_atom_(parens(T), A, Ty).
-term_to_atom_(parens(T), A, Ty) :- term_to_atom_(T, TA, Ty), atom_list_concat(['(', TA, ')'], A).
+term_to_atom_(abs(X, M), A, normal) :-
+  term_to_atom_(M, MA, normal), atom_list_concat([X, '. ', MA], A).
+term_to_atom_(abs(_, M), A, de_bruijn) :-
+  term_to_atom_(M, MA, de_bruijn), atom_list_concat(['λ ', MA], A).
 
 % This one has more arguments, because it has to fill the missing variables' names or indices
 % atom_to_term(Atom, Term, Type, VariablesIn, VariablesOut), where
 % Variables ::= (NextIndex, Names)
-atom_to_term(A, T, Ty, V, Vi) :- empty_assoc(B), atom_chars(A, As), once(phrase(trm(T, Ty, (B, _, V, Vi, 0)), As)).
+atom_to_term(A, T, Ty, V, Vi) :- empty_assoc(B), atom_chars(A, As),
+  once(phrase(trm(Ti, Ty, (B, _, V, Vi, 0)), As)), unpar(Ti, T).
+
+unpar(par(T), Ti) :- unpar(T, Ti).
+unpar(abs(X, M), abs(X, Mi)) :- unpar(M, Mi).
+unpar(app(M, N), app(Mi, Ni)) :- unpar(M, Mi), unpar(N, Ni).
+unpar(X-I, X-I).
 
 % A grammar for reading user-friendly λ-terms
 % term(Term, Type, State), where
 % State ::= (BoundNamesIn, BoundNamesOut, VariablesIn, VariablesOut, LambdasPassed)
 trm(T, Ty, S) --> par(T, Ty, S) | lmd(T, Ty, S) | app(T, Ty, S) | vrb(T, Ty, S).
-par(parens(T), Ty, S) --> ['('], trm(T, Ty, S), [')'].
+par(par(T), Ty, S) --> ['('], trm(T, Ty, S), [')'].
 lmd(abs(X, M), normal, (B, B, I, Ii, L)) --> nam(X),
   { J is -1 - L, Li is L + 1, put_assoc(X, B, J, Bi) },
   ['.', ' '], trm(M, normal, (Bi, _, I, Ii, Li)).
@@ -76,14 +79,11 @@ dgt(D) --> [C], { char_type(C, digit(D)) }.
 index_of(X, X-I, I).
 index_of(X, app(M, N), I) :- once(index_of(X, M, I); index_of(X, N, I)).
 index_of(X, abs(Y, M), I) :- X \= Y, index_of(X, M, I), !.
-index_of(X, parens(M), I) :- index_of(X, M, I).
 
 % α-equivalence for internally represented λ-terms
-eq(_-I, _-I) :- number(I), !.
-eq(app(M, N), app(Mi, Ni)) :- eq(M, Mi), eq(N, Ni), !.
-eq(abs(_, M), abs(_, N)) :- eq(M, N), !.
-eq(parens(M), N) :- eq(M, N), !.
-eq(M, parens(N)) :- eq(M, N).
+eq(_-I, _-I) :- !, number(I).
+eq(app(M, N), app(Mi, Ni)) :- !, eq(M, Mi), eq(N, Ni).
+eq(abs(_, M), abs(_, N)) :- eq(M, N).
 
 % The free variables of an internally represented λ-term
 free_variables(X-I, [X-I]).
@@ -91,4 +91,3 @@ free_variables(app(M, N), FV) :-
   free_variables(M, FVM), free_variables(N, FVN), union(FVM, FVN, FV).
 free_variables(abs(X, M), FV) :-
   free_variables(M, FVM), subtract(FVM, [X-_], FV).
-free_variables(parens(T), FV) :- free_variables(T, FV).

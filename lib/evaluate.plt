@@ -53,7 +53,7 @@ test(evaluate_beta_reduction) :-
   evaluate:evaluate_reduction(
     'beta f0 f0', Out, (Bs, [f1], 42), (Bsi, [], 42), F, F),
   get_assoc(f1, Bsi, Nii), eq(Ni, Nii),
-  W = '(x. x x) (x. x x)',
+  W = '(x. x x) x. x x',
   atom_list_concat([' -β> \nf1 = ', W], Out).
 
 test(evaluate_eta_reduction) :-
