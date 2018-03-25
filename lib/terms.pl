@@ -1,4 +1,4 @@
-:- module(terms, [term/1, term_to_atom/3, atom_to_term/5, index_of/3, eq/2, free_variables/2]).
+:- module(terms, [term/1, term_to_atom/3, atom_to_term/5, eq/2, free_variables/2]).
 % Definitions of λ-terms and conversions between
 % λ-terms and prolog atoms
 
@@ -91,12 +91,6 @@ reorder_app(M, N, app(M, N)).
 itr_app(app(M, par(app(itr(M, I), N))), app(itr(M, J), N)) :- !, J is I + 1.
 itr_app(app(M, par(app(M, N))), app(itr(M, 2), N)) :- !.
 itr_app(M, M).
-
-% The de Bruijn index of a variable
-index_of(X, X-I, I) :- !.
-index_of(X, itr(M, _), I) :- !, index_of(X, M, I).
-index_of(X, app(M, N), I) :- !, once(index_of(X, M, I); index_of(X, N, I)).
-index_of(X, abs(Y, M), I) :- X \= Y, index_of(X, M, I).
 
 % α-equivalence for internally represented λ-terms
 eq(_-I, _-I) :- !, number(I).

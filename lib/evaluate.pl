@@ -3,7 +3,7 @@
 
 :- use_module(terms,
   [ term_to_atom/3, atom_to_term/5
-  , index_of/3, eq/2, free_variables/2]).
+  , eq/2, free_variables/2]).
 :- use_module(reduction,
     [ b_reduce/2, b_reducetr/2
     , e_reduce/2, e_reducetr/2, substitute/4]).
