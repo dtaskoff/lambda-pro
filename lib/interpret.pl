@@ -5,10 +5,8 @@
 % for its variables
 % interpret(Term, Meanings, Interpretation)
 interpret(X-_, Ms, I) :- get_assoc(X, Ms, I).
-interpret(app(itr(M, J), N), Ms, I) :-
+interpret(app(M, J, N), Ms, I) :-
   interpret(M, Ms, F), interpret(N, Ms, X), iterate(F, J, X, I).
-interpret(app(M, N), Ms, I) :-
-  interpret(M, Ms, F), interpret(N, Ms, X), call(F, X, I).
 interpret(abs(X, M), Ms, [Y, I]>>(I = J)) :-
   put_assoc(X, Ms, Y, Msi),
   interpret(M, Msi, J).

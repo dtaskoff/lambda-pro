@@ -31,14 +31,14 @@ test(evaluate_substitution,
     list_to_assoc([f0-T], Bs),
     evaluate:evaluate_substitution('f0 f0 (x. y)', M, _, Bs, 42, I),
     Ii is I + 2,
-    Mi = app(T, app(T, abs(x, y-Ii))),
+    Mi = app(T, 1, app(T, 1, abs(x, y-Ii))),
     eq(M, Mi).
 
 test(evaluate_substitutions,
   forall(term(_, name, lambda, T))) :-
     list_to_assoc([f0-T, f1-T, f2-T], Bs),
     evaluate:evaluate_substitutions('f0 f1 f2', M, _, Bs, 42, _),
-    Mi = app(T, app(T, T)),
+    Mi = app(T, 1, app(T, 1, T)),
     eq(M, Mi).
 
 test(x_reduction_beta) :-
@@ -47,8 +47,8 @@ test(x_reduction_eta) :-
   evaluate:x_reduction(e_reduce, 'eta f0', 'f0').
 
 test(evaluate_beta_reduction) :-
-  N = abs(x, app(x-0, x-0)),
-  Ni = app(N, N),
+  N = abs(x, app(x-0, 1, x-0)),
+  Ni = app(N, 1, N),
   list_to_assoc([f0-N], Bs),
   evaluate:evaluate_reduction(
     'beta f0 f0', Out, (Bs, [f1], 42), (Bsi, [], 42), F, F),
@@ -57,7 +57,7 @@ test(evaluate_beta_reduction) :-
   atom_list_concat([' -β> \nf1 = ', W], Out).
 
 test(evaluate_eta_reduction) :-
-  T = abs(x, app(y-43, x-0)),
+  T = abs(x, app(y-43, 1, x-0)),
   list_to_assoc([f0-T], Bs),
   evaluate:evaluate_reduction(
     'eta f0', Out, (Bs, [f1], 42), (Bsi, [], 41), F, F),
