@@ -14,8 +14,8 @@ test(evaluate_,
           term(X, normal, term, T)))) :-
     empty_assoc(Bs),
     (X == 42 ->
-      evaluate:evaluate_(A, Out, (Bs, [f0], 42), (Bsi, [], 41));
-      evaluate:evaluate_(A, Out, (Bs, [f0], I), (Bsi, [],  I))),
+      evaluate:evaluate_(A, _, Out, (Bs, [f0], 42), (Bsi, [], 41));
+      evaluate:evaluate_(A, _, Out, (Bs, [f0], I), (Bsi, [],  I))),
     evaluate:show_term(f0, A, Out),
     put_assoc(f0, Bs, T, Bsi).
 
@@ -60,7 +60,7 @@ test(evaluate_eta_reduction) :-
   T = abs(x, app(y-43, 1, x-0)),
   list_to_assoc([f0-T], Bs),
   evaluate:evaluate_reduction(
-    'eta f0', Out, (Bs, [f1], 42), (Bsi, [], 41), F, F),
+    'eta f0', Out, (Bs, [f1], 42), (Bsi, [], 42), F, F),
   get_assoc(f1, Bsi, Ti), eq(Ti, y-42),
   atom_list_concat([' -η> \nf1 = y'], Out).
 

@@ -111,12 +111,13 @@ evaluate_term(In, Out, S, Si, F, F) :-
       show_terms(N, A, Ai, Out);
       atom_list_concat(['`', N, '` is not defined'], Msg),
       evaluate_bad_input(Msg, Out, S, Si, F, F));
-    evaluate_(In, Out, S, Si).
+    evaluate_(In, _, Out, S, Si).
 
 % This is used to optimise the number of conversions
 % between the formats
-evaluate_(A, Out, (Bs, [N|Ns], I), (Bsi, Ns, Ii)) :-
-  atom_to_term(A, T, normal, I, Ii),
+evaluate_(A, T, Out, (Bs, [N|Ns], I), (Bsi, Ns, Ii)) :-
+  (nonvar(A) -> atom_to_term(A, T, normal, I, Ii);
+    term_to_atom(T, A, normal), Ii = I),
   put_assoc(N, Bs, T, Bsi),
   show_term(N, A, Out).
 
@@ -134,8 +135,7 @@ evaluate_reduction(In, Out, S, Si, F, F) :-
   atom_to_term(A, T, normal, I, _),
   (evaluate_substitutions(T, M, Bs) -> true; M = T),
   call(Reduce, M, Ti),
-  term_to_atom(Ti, Ai, normal),
-  evaluate_(Ai, Outi, S, Si),
+  evaluate_(_, Ti, Outi, S, Si),
   atom_reduce(R, Reduce),
   atom_list_concat([R, '\n', Outi], Out).
 

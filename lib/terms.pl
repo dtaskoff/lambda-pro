@@ -21,6 +21,7 @@ term(abs(X, M)) :- atom(X), term(M).
 % Convert between user-friendly λ-terms and internally represented λ-terms
 % term_to_atom(Term, Atom, Type), where
 % Type ::= normal | de_bruijn
+term_to_atom(T, '...', _) :- '$term_size'(T, _, Sz), Sz > 256, !.
 term_to_atom(T, A, Ty) :- nonvar(T), nonvar(Ty), term_to_atom_(T, A, Ty).
 term_to_atom_(X-_, X, normal) :- !.
 term_to_atom_(_-I, I, de_bruijn) :- !.
