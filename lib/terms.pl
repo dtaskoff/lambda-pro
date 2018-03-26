@@ -25,6 +25,8 @@ term_to_atom(T, '...', _) :- '$term_size'(T, _, Sz), Sz > 256, !.
 term_to_atom(T, A, Ty) :- nonvar(T), nonvar(Ty), term_to_atom_(T, A, Ty).
 term_to_atom_(X-_, X, normal) :- !.
 term_to_atom_(_-I, I, de_bruijn) :- !.
+term_to_atom_(app(M, I, abs(X, N)), A, Ty) :- !,
+  term_to_atom_(app(M, I, par(abs(X, N))), A, Ty).
 term_to_atom_(app(M, I, app(N, J, P)), A, Ty) :- !,
   term_to_atom_(app(M, I, par(app(N, J, P))), A, Ty).
 term_to_atom_(app(abs(X, M), I, N), A, Ty) :- !,
