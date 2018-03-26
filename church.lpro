@@ -21,15 +21,15 @@ V = p. p tt
 % Numerals
 
 c0 = f. x. x
-s = n. f. x. f (n f x)
+succ = n. f. x. f (n f x)
 + = m. n. m s n
 * = m. n. m (+ n) c0
 ^ = m. n. n m
 ^^ = m. n. n (^ m) c1
 
-z? = n. n. (& ff) tt
-even = n. n ! tt
-odd = n. n ! ff
+zero? = n. n (& ff) tt
+even? = n. n ! tt
+odd? = n. n ! ff
 
 % Pairs
 
@@ -50,3 +50,5 @@ foldr = v. f. xs. xs v f
 map = f. xs. xs nil (x. ys. cons (f x) ys)
 filter = p. xs. xs nil (x. xs. ? (p x) (cons x xs) xs)
 length = xs. xs c0 (K (+ c1))
+
+empty? = xs. z? (length xs)
