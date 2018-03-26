@@ -102,9 +102,9 @@ f11 = x. y. z. x y z
  -η>> 
 f12 = x. x
 ```
-You can also load a file with defined λ-terms (see [this one](./combinators.lpro) for example):
+You can also load a file with defined λ-terms (see [this one](./church.lpro) for example):
 ```
-λ-προ: load combinators.lpro
+λ-προ: load church.lpro
 λ-προ: K*?
 K* = x. y. y
 λ λ 0

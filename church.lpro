@@ -1,0 +1,52 @@
+% Combinators
+
+I = x. x
+K = x. y. x
+K* = x. y. y
+S = x. y. z. (x z) (y z)
+w = x. x x
+W = w w
+Y = f. (x. f (x x)) (x. f (x x))
+
+% Booleans
+
+tt = K
+ff = K*
+
+? = I
+& = p. q. p q ff
+V = p. p tt
+! = p. p ff tt
+
+% Numerals
+
+c0 = f. x. x
+s = n. f. x. f (n f x)
++ = m. n. m s n
+* = m. n. m (+ n) c0
+^ = m. n. n m
+^^ = m. n. n (^ m) c1
+
+z? = n. n. (& ff) tt
+even = n. n ! tt
+odd = n. n ! ff
+
+% Pairs
+
+<> = x. y. z. z x y
+
+left = p. p K
+right = p. p K*
+
+% Lists
+
+nil = v. f. v
+cons = x. xs. v. f. f x (xs v f)
+
+head = xs. xs bottom K
+tail = xs. xs bottom K*
+
+foldr = v. f. xs. xs v f
+map = f. xs. xs nil (x. ys. cons (f x) ys)
+filter = p. xs. xs nil (x. xs. ? (p x) (cons x xs) xs)
+length = xs. xs c0 (K (+ c1))

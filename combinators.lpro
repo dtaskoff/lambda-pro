@@ -1,7 +1,0 @@
-I = x. x
-K = x. y. x
-K* = x. y. y
-S = x. y. z. (x z) (y z)
-w = x. x x
-W = w w
-Y = f. (x. f (x x)) (x. f (x x))
