@@ -142,13 +142,13 @@ evaluate_reduction(In, Out, S, Si, F, F) :-
 % Substitute all free variables in an atom A
 % that are bound in the environment
 evaluate_substitutions(T, Ti, Bs) :-
-  evaluate_substitution(T, M, Bs),
+  evaluate_substitution(T, M, Bs), !,
   (evaluate_substitutions(M, Ti, Bs) -> true; Ti = M).
 
 % Substitute the first free variable in an atom A
 % that is bound in the environment
 evaluate_substitution(T, M, Bs) :-
-  free_variables(T, V), memberchk(X-_, V),
+  free_variables(T, V), member(X-_, V),
   get_assoc(X, Bs, N), substitute(T, X, N, M).
 
 atom_reduce(' -β> ', b_reduce).
