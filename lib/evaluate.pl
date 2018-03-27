@@ -80,21 +80,23 @@ fold_with_flags(Xs, Func, Out, S, Si, F, Fi) :-
 %
 % Note: names can be overwritten by adding 'overwrite' to Flags
 evaluate_name_binding(In, Out, (Bs, Ns, I), Si, F, F) :-
-  name_binding(In, N, B),
+  name_binding(In, N, B, Ty),
   (memberchk(overwrite, F) ->
     (del_assoc(N, Bs, _, Bsi) -> true; Bsi = Bs); Bsi = Bs),
   (get_assoc(N, Bsi, _) ->
     atom_list_concat(['`', N, '` is already bound'], Msg),
     Si = (Bs, Ns, I),
     evaluate_bad_input(Msg, Out, Si, Si, F, F);
-    evaluate_input(B, Out, (Bsi, [N|Ns], I), Si, F, F)).
+    (Ty == eqv -> atom_concat('beta* ', B, BB); BB = B),
+    evaluate_input(BB, Out, (Bsi, [N|Ns], I), Si, F, F)).
 
-name_binding(A, N, B) :-
-  atom_chars(A, Cs), once(phrase(name_binding(Ns, Bs), Cs)),
+name_binding(A, N, B, Ty) :-
+  atom_chars(A, Cs), once(phrase(name_binding(Ns, Bs, Ty), Cs)),
   atom_list_concat(Ns, N), atom_list_concat(Bs, B).
 
-name_binding([C|Cs], B) --> [C], { C \= ' '}, name_binding(Cs, B).
-name_binding([], B) --> [' ', =, ' '|B].
+name_binding([C|Cs], B, Ty) --> [C], { C \= ' '}, name_binding(Cs, B, Ty).
+name_binding([], B, eqv) --> [' ', =, ' '|B].
+name_binding([], B, def) --> [' ', :, =, ' '|B].
 
 % Store and/or show a λ-term with its corresponding name and
 % version with de Bruijn indices
