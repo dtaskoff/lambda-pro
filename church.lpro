@@ -46,8 +46,17 @@ cons := x. xs. v. f. f x (xs v f)
 head = xs. xs bottom K
 tail = xs. xs bottom K*
 
+append := xs. ys. xs ys cons
 foldr := v. f. xs. xs v f
 map := f. xs. xs nil (x. ys. cons (f x) ys)
 filter := p. xs. xs nil (x. xs. ? (p x) (cons x xs) xs)
 length := xs. xs c0 (K (+ c1))
 empty? := xs. z? (length xs)
+
+
+% More numerals
+
+pred := n. right (n (p. <> (succl p) (left p)) (<> c0 c0))
+fact := n. right (n (p. <> (succl p) (* (succl p) (right p))) (<> c0 c1))
+succl := p. succ (left p)
+fib := n. left (n (p. <> (right p) (p +)) (<> c0 c1))
