@@ -3,4 +3,4 @@
 
 % Concatenate a list of atoms into a single atom
 atom_list_concat(List, Atom) :-
-  foldl([X, Acc]>>call(atom_concat, Acc, X), List, '', Atom).
+  foldl([X, Acc]>>atom_concat(Acc, X), List, '', Atom).
