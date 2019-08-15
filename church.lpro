@@ -22,6 +22,15 @@ V := p. p tt
 
 c0 := f. x. x
 succ := n. f. x. f (n f x)
+c1 = succ c0
+c2 = succ c1
+c3 = succ c2
+c4 = succ c3
+c5 = succ c4
+c6 = succ c5
+c7 = succ c6
+c8 = succ c7
+c9 = succ c8
 + := m. n. m succ n
 * := m. n. m (+ n) c0
 ^ := m. n. n m
