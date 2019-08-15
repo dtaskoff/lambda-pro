@@ -19,7 +19,7 @@ test(e_reduce,
   not(e_reduce(T, _)).
 
 test(e_reduce) :- T = abs(X, app(abs(Y, Y-0), 1, X)),
-  Ti = abs(Y, Y-0), e_reduce(T, Ti).
+  T1 = abs(Y, Y-0), e_reduce(T, T1).
 
 test(up) :- up(X-42, X-43, 1).
 test(up) :- up(X-43, X-42, -1).
@@ -36,8 +36,8 @@ test(rename) :- rename(a, app(a-0, 1, c-1), b, app(b-0, 1, c-1)).
 test(substitute) :- substitute(x-42, y, _, x-42).
 
 test(substitute) :- M = app(x-42, 1, y-41),
-  N = abs(y, z-41), substitute(M, x, N, Ti),
-  Ti = app(abs(y, z-41), 1, y-41).
+  N = abs(y, z-41), substitute(M, x, N, T1),
+  T1 = app(abs(y, z-41), 1, y-41).
 
 test(substitute) :-
   substitute(abs(x, x-0), x, abs(x, y-42), abs(x, x-0)).

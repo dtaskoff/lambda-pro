@@ -51,11 +51,11 @@ evaluate_numeral(In, Out, S, S, F, F) :-
 evaluate_load(In, Out, Sin, Sout, Fin, Fout) :-
   file_to_load(In, N), load_file(N, Out, Sin, Sout, Fin, Fout).
 
-load_file(N, Out, S, Si, F, Fiii) :-
-  catch((read_file(N, Lines), union([overwrite, file-N], F, Fi),
-    fold_with_flags(Lines, evaluate_input, _, S, Si, Fi, Fii),
-    subtract(Fii, [overwrite], Fiii), Out = ''), _,
-    (atom_concat('Can\'t load file: ', N, Out), Si = S, Fiii = F)).
+load_file(N, Out, Sin, Sout, Fin, Fout) :-
+  catch((read_file(N, Lines), union([overwrite, file-N], Fin, F1),
+    fold_with_flags(Lines, evaluate_input, _, Sin, Sout, F1, F2),
+    subtract(F2, [overwrite], Fout), Out = ''), _,
+    (atom_concat('Can\'t load file: ', N, Out), Sout = Sin, Fout = Fin)).
 
 file_to_load(A, F) :-
   atom_chars(A, Cs), once(phrase(file_to_load(Fs), Cs)),
@@ -64,31 +64,31 @@ file_to_load(A, F) :-
 file_to_load(F) --> [l, o, a, d, ' '|F].
 
 % Reload files that were loaded before
-evaluate_reload(reload, Out, S, Si, F, Fi) :-
-  convlist([X, N]>>(X = file-N), F, Files),
-  fold_with_flags(Files, load_file, Out, S, Si, F, Fi).
+evaluate_reload(reload, Out, Sin, Sout, Fin, Fout) :-
+  convlist([X, N]>>(X = file-N), Fin, Files),
+  fold_with_flags(Files, load_file, Out, Sin, Sout, Fin, Fout).
 
 % Abstract the folding over files and lines which collects flags
-fold_with_flags(Xs, Func, Out, S, Si, F, Fi) :-
-  foldl([X, (Outii, Sii, Fii), (Outiii, Siii, Fiv)]>>(
-    call(Func, X, Result, Sii, Siii, F, Fiii),
-    atom_list_concat([Outii, '\n', Result], Outiii),
-    union(Fii, Fiii, Fiv)), Xs, ('', S, F), (Out, Si, Fi)).
+fold_with_flags(Xs, Func, Out, Sin, Sout, Fin, Fout) :-
+  foldl([X, (Out1, S1, F1), (Out2, S2, F)]>>(
+    call(Func, X, Result, S1, S2, Fin, F2),
+    atom_list_concat([Out1, '\n', Result], Out2),
+    union(F1, F2, F)), Xs, ('', Sin, Fin), (Out, Sout, Fout)).
 
 % Bind a term to a name. If the name is already used,
 % display an 'error' message
 %
 % Note: names can be overwritten by adding 'overwrite' to Flags
-evaluate_name_binding(In, Out, (Bs, Ns, I), Si, F, F) :-
+evaluate_name_binding(In, Out, (Bsin, Ns, I), Sout, F, F) :-
   name_binding(In, N, B, Ty),
   (memberchk(overwrite, F) ->
-    (del_assoc(N, Bs, _, Bsi) -> true; Bsi = Bs); Bsi = Bs),
-  (get_assoc(N, Bsi, _) ->
+    (del_assoc(N, Bsin, _, Bsout) -> true; Bsout = Bsin); Bsout = Bsin),
+  (get_assoc(N, Bsout, _) ->
     atom_list_concat(['`', N, '` is already bound'], Msg),
-    Si = (Bs, Ns, I),
-    evaluate_bad_input(Msg, Out, Si, Si, F, F);
+    Sout = (Bsin, Ns, I),
+    evaluate_bad_input(Msg, Out, Sout, Sout, F, F);
     (Ty == eqv -> atom_concat('beta* ', B, BB); BB = B),
-    evaluate_input(BB, Out, (Bsi, [N|Ns], I), Si, F, F)).
+    evaluate_input(BB, Out, (Bsout, [N|Ns], I), Sout, F, F)).
 
 name_binding(A, N, B, Ty) :-
   atom_chars(A, Cs), once(phrase(name_binding(Ns, Bs, Ty), Cs)),
@@ -125,8 +125,8 @@ evaluate_(A, T, Out, (Bs, [N|Ns], I), (Bs1, Ns, I1)) :-
 
 % Show a λ-term with its corresponding name and
 % version with de Bruijn indices
-show_terms(N, A, Ai, S) :-
-  show_term(N, A, Si), atom_list_concat([Si, '\n', Ai], S).
+show_terms(N, A, A1, S) :-
+  show_term(N, A, S1), atom_list_concat([S1, '\n', A1], S).
 
 % Show a λ-term without its indices
 show_term(N, A, S) :- atom_list_concat([N, ' = ', A], S).

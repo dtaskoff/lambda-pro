@@ -14,10 +14,10 @@ test(evaluate_,
           term(X, normal, term, T)))) :-
     empty_assoc(Bs),
     (X == 42 ->
-      evaluate:evaluate_(A, _, Out, (Bs, [f0], 42), (Bsi, [], 41));
-      evaluate:evaluate_(A, _, Out, (Bs, [f0], I), (Bsi, [],  I))),
+      evaluate:evaluate_(A, _, Out, (Bs, [f0], 42), (Bs1, [], 41));
+      evaluate:evaluate_(A, _, Out, (Bs, [f0], I), (Bs1, [],  I))),
     evaluate:show_term(f0, A, Out),
-    put_assoc(f0, Bs, T, Bsi).
+    put_assoc(f0, Bs, T, Bs1).
 
 test(evaluate_term,
   forall((term(X, name, atom, A),
@@ -30,16 +30,16 @@ test(evaluate_substitution,
   forall(term(_, name, lambda, T))) :-
     list_to_assoc([f0-T], Bs),
     evaluate:evaluate_substitution('f0 f0 (x. y)', M, _, Bs, 42, I),
-    Ii is I + 2,
-    Mi = app(T, 1, app(T, 1, abs(x, y-Ii))),
-    eq(M, Mi).
+    I1 is I + 2,
+    M1 = app(T, 1, app(T, 1, abs(x, y-I1))),
+    eq(M, M1).
 
 test(evaluate_substitutions,
   forall(term(_, name, lambda, T))) :-
     list_to_assoc([f0-T, f1-T, f2-T], Bs),
     evaluate:evaluate_substitutions('f0 f1 f2', M, _, Bs, 42, _),
-    Mi = app(T, 1, app(T, 1, T)),
-    eq(M, Mi).
+    M1 = app(T, 1, app(T, 1, T)),
+    eq(M, M1).
 
 test(x_reduction_beta) :-
   evaluate:x_reduction(b_reduce, 'beta f0 f0', 'f0 f0').
@@ -51,8 +51,8 @@ test(evaluate_beta_reduction) :-
   Ni = app(N, 1, N),
   list_to_assoc([f0-N], Bs),
   evaluate:evaluate_reduction(
-    'beta f0 f0', Out, (Bs, [f1], 42), (Bsi, [], 42), F, F),
-  get_assoc(f1, Bsi, Nii), eq(Ni, Nii),
+    'beta f0 f0', Out, (Bs, [f1], 42), (Bs1, [], 42), F, F),
+  get_assoc(f1, Bs1, N2), eq(N1, N2),
   W = '(x. x x) (x. x x)',
   atom_list_concat([' -β> \nf1 = ', W], Out).
 
@@ -60,8 +60,8 @@ test(evaluate_eta_reduction) :-
   T = abs(x, app(y-43, 1, x-0)),
   list_to_assoc([f0-T], Bs),
   evaluate:evaluate_reduction(
-    'eta f0', Out, (Bs, [f1], 42), (Bsi, [], 42), F, F),
-  get_assoc(f1, Bsi, Ti), eq(Ti, y-42),
+    'eta f0', Out, (Bs, [f1], 42), (Bs1, [], 42), F, F),
+  get_assoc(f1, Bs1, T1), eq(T1, y-42),
   atom_list_concat([' -η> \nf1 = y'], Out).
 
 :- end_tests(evaluate).
