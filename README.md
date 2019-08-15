@@ -10,6 +10,7 @@ Currently implemented features:
   - λ-term reading and printing
   - β- and η- reductions
   - α-equivalence checking (for already defined terms)
+* load λ-terms from a file
 
 How to use:
 -----
@@ -60,18 +61,23 @@ And reference other terms by name:
 λ-προ: f0 f0
 f3 = f0 f0
 ```
+Or give custom names to terms:
+```
+λ-προ: c3 = f. x. f (f (f x))
+c3 = f. x. f (f (f x))
+```
 You can see a single step of β-reduction:
 ```
 λ-προ: beta f3
- -β> 
-f4 = (x. x x) x. x x
+ -β>
+f4 = (x. x x) (x. x x)
 ```
 Or a single step of η-reduction:
 ```
 λ-προ: x. y. x y
 f5 = x. y. x y
 λ-προ: eta f5
- -η> 
+ -η>
 f6 = x. x
 ```
 Or check for α-equivalence of λ-terms:
@@ -91,15 +97,13 @@ false
 ```
 There are also transitive and reflexive closures for the reductions:
 ```
-λ-προ: c3 = f. x. f (f (f x)) 
-c3 = f. x. f (f (f x))
 λ-προ: beta* c3 succ zero
- -β>> 
+ -β>>
 f10 = succ (succ (succ zero))
 λ-προ: x. y. z. x y z
 f11 = x. y. z. x y z
 λ-προ: eta* f11
- -η>> 
+ -η>>
 f12 = x. x
 ```
 You can also load a file with defined λ-terms (see [this one](./church.lpro) for example):
