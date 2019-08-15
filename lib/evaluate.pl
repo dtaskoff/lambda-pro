@@ -14,18 +14,18 @@
 
 % evaluate_input(Input, Output, StateIn, StateOut, FlagsIn, FlagsOut), where
 % State = (Bindings, Names, NextIndex)
-evaluate_input(In, Out, S, Si, F, Fi) :-
-  evaluate_quit(In, Out, S, Si, F, Fi);
-  evaluate_env(In, Out, S, Si, F, Fi);
-  skip_comment(In, Out, S, Si, F, Fi);
-  evaluate_numeral(In, Out, S, Si, F, Fi);
-  evaluate_load(In, Out, S, Si, F, Fi);
-  evaluate_reload(In, Out, S, Si, F, Fi);
-  evaluate_name_binding(In, Out, S, Si, F, Fi);
-  evaluate_reduction(In, Out, S, Si, F, Fi);
-  evaluate_equivalence(In, Out, S, Si, F, Fi);
-  evaluate_term(In, Out, S, Si, F, Fi);
-  evaluate_bad_input(In, Out, S, Si, F, Fi).
+evaluate_input(In, Out, Sin, Sout, Fin, Fout) :-
+  evaluate_quit(In, Out, Sin, Sout, Fin, Fout);
+  evaluate_env(In, Out, Sin, Sout, Fin, Fout);
+  skip_comment(In, Out, Sin, Sout, Fin, Fout);
+  evaluate_numeral(In, Out, Sin, Sout, Fin, Fout);
+  evaluate_load(In, Out, Sin, Sout, Fin, Fout);
+  evaluate_reload(In, Out, Sin, Sout, Fin, Fout);
+  evaluate_name_binding(In, Out, Sin, Sout, Fin, Fout);
+  evaluate_reduction(In, Out, Sin, Sout, Fin, Fout);
+  evaluate_equivalence(In, Out, Sin, Sout, Fin, Fout);
+  evaluate_term(In, Out, Sin, Sout, Fin, Fout);
+  evaluate_bad_input(In, Out, Sin, Sout, Fin, Fout).
 
 % Exit if the user has entered 'quit'
 evaluate_quit(quit, quit, S, S, F, F) :- halt.
@@ -33,9 +33,9 @@ evaluate_quit(quit, quit, S, S, F, F) :- halt.
 % Show the names in the current environment
 evaluate_env(env, Out, S, S, F, F) :-
   S = (Bs, _, _), assoc_to_list(Bs, L),
-  foldl([N-T, Outi, Outii]>>(
+  foldl([N-T, Out1, Out2]>>(
     term_to_atom(T, A, normal), show_term(N, A, Out),
-    atom_list_concat([Outi, '\n', Out], Outii)
+    atom_list_concat([Out1, '\n', Out], Out2)
     ), L, 'Names: ', Out).
 
 % Skip a line starting with '%'
@@ -48,8 +48,8 @@ evaluate_numeral(In, Out, S, S, F, F) :-
   show_term(N, A, Out).
 
 % Load a file into the repl
-evaluate_load(In, Out, S, Si, F, Fi) :-
-  file_to_load(In, N), load_file(N, Out, S, Si, F, Fi).
+evaluate_load(In, Out, Sin, Sout, Fin, Fout) :-
+  file_to_load(In, N), load_file(N, Out, Sin, Sout, Fin, Fout).
 
 load_file(N, Out, S, Si, F, Fiii) :-
   catch((read_file(N, Lines), union([overwrite, file-N], F, Fi),
@@ -103,24 +103,24 @@ name_binding([], B, def) --> [' ', :, =, ' '|B].
 %
 % If A is x?, look if x is a name bound in the environment,
 % else add a new λ-term to the environment
-evaluate_term(In, Out, S, Si, F, F) :-
-  sub_atom(In, _, 1, 0, ?) -> Si = S,
+evaluate_term(In, Out, Sin, Sout, F, F) :-
+  sub_atom(In, _, 1, 0, ?) -> Sout = Sin,
     sub_atom(In, 0, _, 1, N),
-    S = (Bs, _, _),
+    Sin = (Bs, _, _),
     (get_assoc(N, Bs, T) ->
       term_to_atom(T, A, normal),
-      term_to_atom(T, Ai, de_bruijn),
-      show_terms(N, A, Ai, Out);
+      term_to_atom(T, A1, de_bruijn),
+      show_terms(N, A, A1, Out);
       atom_list_concat(['`', N, '` is not defined'], Msg),
-      evaluate_bad_input(Msg, Out, S, Si, F, F));
-    evaluate_(In, _, Out, S, Si).
+      evaluate_bad_input(Msg, Out, Sin, Sout, F, F));
+    evaluate_(In, _, Out, Sin, Sout).
 
 % This is used to optimise the number of conversions
 % between the formats
-evaluate_(A, T, Out, (Bs, [N|Ns], I), (Bsi, Ns, Ii)) :-
-  (nonvar(A) -> atom_to_term(A, T, normal, I, Ii);
-    term_to_atom(T, A, normal), Ii = I),
-  put_assoc(N, Bs, T, Bsi),
+evaluate_(A, T, Out, (Bs, [N|Ns], I), (Bs1, Ns, I1)) :-
+  (nonvar(A) -> atom_to_term(A, T, normal, I, I1);
+    term_to_atom(T, A, normal), I1 = I),
+  put_assoc(N, Bs, T, Bs1),
   show_term(N, A, Out).
 
 % Show a λ-term with its corresponding name and
@@ -131,21 +131,21 @@ show_terms(N, A, Ai, S) :-
 % Show a λ-term without its indices
 show_term(N, A, S) :- atom_list_concat([N, ' = ', A], S).
 
-evaluate_reduction(In, Out, S, Si, F, F) :-
+evaluate_reduction(In, Out, Sin, Sout, F, F) :-
   x_reduction(Reduce, In, A),
-  S = (Bs, _, I),
+  Sin = (Bs, _, I),
   atom_to_term(A, T, normal, I, _),
   (evaluate_substitutions(T, M, Bs) -> true; M = T),
-  call(Reduce, M, Ti),
-  evaluate_(_, Ti, Outi, S, Si),
+  call(Reduce, M, T1),
+  evaluate_(_, T1, Out1, Sin, Sout),
   atom_reduce(R, Reduce),
-  atom_list_concat([R, '\n', Outi], Out).
+  atom_list_concat([R, '\n', Out1], Out).
 
 % Substitute all free variables in an atom A
 % that are bound in the environment
-evaluate_substitutions(T, Ti, Bs) :-
-  evaluate_substitution(T, M, Bs), !,
-  (evaluate_substitutions(M, Ti, Bs) -> true; Ti = M).
+evaluate_substitutions(Tin, Tout, Bs) :-
+  evaluate_substitution(Tin, M, Bs), !,
+  (evaluate_substitutions(M, Tout, Bs) -> true; Tout = M).
 
 % Substitute the first free variable in an atom A
 % that is bound in the environment
@@ -158,9 +158,9 @@ atom_reduce(' -β>> ', b_reducetr).
 atom_reduce(' -η> ', e_reduce).
 atom_reduce(' -η>> ', e_reducetr).
 
-x_reduction(X, A, Ai) :-
-  atom_chars(A, CS), once(phrase(x_reduction(X, As), CS)),
-  atom_list_concat(As, Ai).
+x_reduction(X, Ain, Aout) :-
+  atom_chars(Ain, CS), once(phrase(x_reduction(X, As), CS)),
+  atom_list_concat(As, Aout).
 
 x_reduction(b_reduce, A) --> [b, e, t, a, ' '|A].
 x_reduction(b_reducetr, A) --> [b, e, t, a, *, ' '|A].
