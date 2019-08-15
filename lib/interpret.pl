@@ -10,7 +10,7 @@ interpret(app(M, J, N), Ms, I) :-
 interpret(abs(X, M), Ms, [Y, I]>>(I = J)) :-
   put_assoc(X, Ms, Y, Msi),
   interpret(M, Msi, J).
-interpret(parens(T), Ms, I) :- interpret(T, Ms, I).
+interpret(par(T), Ms, I) :- interpret(T, Ms, I).
 
 iterate(F, N, X, I) :- N > 0, !, call(F, X, Y), M is N - 1,
   iterate(F, M, Y, I).
